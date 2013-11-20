@@ -184,6 +184,26 @@ static char *cache_il2_opt;
 /* l2 instruction cache hit latency (in cycles) */
 static int cache_il2_lat;
 
+/******** CS203A buffer ********/
+/* il_buffer config */
+static char *buffer_il1_opt;
+
+/* dl_buffer config */
+static char *buffer_dl1_opt;
+
+/* latency for our dl_buffer */
+static int buffer_dl1_lat;
+
+/* latency for our il_buffer */
+static int buffer_il1_lat;
+
+/* our il buffer */
+struct cache_t *buffer_il1;
+
+/* our dl buffer */
+struct cache_t *buffer_dl1;
+/******* End CS203A ***********/
+
 /* flush caches on system calls */
 static int flush_on_syscalls;
 
@@ -459,27 +479,6 @@ mem_access_latency(int blk_sz)		/* block size accessed */
       (/* remainder chunk latency */mem_lat[1] * (chunks - 1)));
 }
 
-/******** CS203A buffer ********/
-/* il_buffer config */
-static char *buffer_il_opt;
-
-/* dl_buffer config */
-static char *buffer_dl_opt;
-
-/* latency for our dl_buffer */
-static int buffer_dl_lat;
-
-/* latency for our il_buffer */
-static int buffer_il_lat;
-
-/* our il buffer */
-struct cache_t *buffer_il1;
-
-/* our dl buffer */
-struct cache_t *buffer_dl1;
-/******* End CS203A ***********/
-
-
 /*
  * cache miss handlers
  */
@@ -552,6 +551,89 @@ il1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
     int bsize,		/* size of block to access */
     struct cache_blk_t *blk,	/* ptr to block in upper level */
     tick_t now)		/* time of access */
+{
+  unsigned int lat;
+
+  if (cache_il2)
+  {
+    /* access next level of inst cache hierarchy */
+    lat = cache_access(cache_il2, cmd, baddr, NULL, bsize,
+        /* now */now, /* pudata */NULL, /* repl addr */NULL);
+
+    /* Wattch -- Dcache2 access */
+    dcache2_access++;
+
+    if (cmd == Read)
+      return lat;
+    else
+      panic("writes to instruction memory not supported");
+  }
+  else
+  {
+    /* access main memory */
+    if (cmd == Read)
+      return mem_access_latency(bsize);
+    else
+      panic("writes to instruction memory not supported");
+  }
+}
+/**
+ * CS203a 
+ *  This is what we will need to edit to move between
+ *  dl1 our buffer and dl2
+ */
+/* l1 data cache l1 block miss handler function */
+  static unsigned int     /* latency of block access */
+dl1_buffer_access_fn(enum mem_cmd cmd,   /* access cmd, Read or Write */
+    md_addr_t baddr,    /* block address to access */
+    int bsize,    /* size of block to access */
+    struct cache_blk_t *blk,  /* ptr to block in upper level */
+    tick_t now)   /* time of access */
+{
+  unsigned int lat;
+
+  if (cache_dl2)
+  {
+    /* access next level of data cache hierarchy */
+    lat = cache_access(cache_dl2, cmd, baddr, NULL, bsize,
+        /* now */now, /* pudata */NULL, /* repl addr */NULL);
+
+    /* Wattch -- Dcache2 access */
+    dcache2_access++;
+
+    if (cmd == Read)
+      return lat;
+    else
+    {
+      /* FIXME: unlimited write buffers */
+      return 0;
+    }
+  }
+  else
+  {
+    /* access main memory */
+    if (cmd == Read)
+      return mem_access_latency(bsize);
+    else
+    {
+      /* FIXME: unlimited write buffers */
+      return 0;
+    }
+  }
+}
+
+/**
+  * CS203a
+  * This will need to be altered to allow for our
+  *  il1 cache to buffer to il2 cache
+  */
+/* l1 inst cache l1 block miss handler function */
+  static unsigned int     /* latency of block access */
+il1_buffer_access_fn(enum mem_cmd cmd,   /* access cmd, Read or Write */
+    md_addr_t baddr,    /* block address to access */
+    int bsize,    /* size of block to access */
+    struct cache_blk_t *blk,  /* ptr to block in upper level */
+    tick_t now)   /* time of access */
 {
   unsigned int lat;
 
@@ -4937,90 +5019,4 @@ sim_main(void)
   }
 }
 
-
-
-
-/**
- * CS203a 
- *  This is what we will need to edit to move between
- *  dl1 our buffer and dl2
- */
-/* l1 data cache l1 block miss handler function */
-  static unsigned int     /* latency of block access */
-dl1_buffer_access_fn(enum mem_cmd cmd,   /* access cmd, Read or Write */
-    md_addr_t baddr,    /* block address to access */
-    int bsize,    /* size of block to access */
-    struct cache_blk_t *blk,  /* ptr to block in upper level */
-    tick_t now)   /* time of access */
-{
-  unsigned int lat;
-
-  if (cache_dl2)
-  {
-    /* access next level of data cache hierarchy */
-    lat = cache_access(cache_dl2, cmd, baddr, NULL, bsize,
-        /* now */now, /* pudata */NULL, /* repl addr */NULL);
-
-    /* Wattch -- Dcache2 access */
-    dcache2_access++;
-
-    if (cmd == Read)
-      return lat;
-    else
-    {
-      /* FIXME: unlimited write buffers */
-      return 0;
-    }
-  }
-  else
-  {
-    /* access main memory */
-    if (cmd == Read)
-      return mem_access_latency(bsize);
-    else
-    {
-      /* FIXME: unlimited write buffers */
-      return 0;
-    }
-  }
-}
-
-/**
-  * CS203a
-  * This will need to be altered to allow for our
-  *  il1 cache to buffer to il2 cache
-  */
-/* l1 inst cache l1 block miss handler function */
-  static unsigned int     /* latency of block access */
-il1_buffer_access_fn(enum mem_cmd cmd,   /* access cmd, Read or Write */
-    md_addr_t baddr,    /* block address to access */
-    int bsize,    /* size of block to access */
-    struct cache_blk_t *blk,  /* ptr to block in upper level */
-    tick_t now)   /* time of access */
-{
-  unsigned int lat;
-
-  if (cache_il2)
-  {
-    /* access next level of inst cache hierarchy */
-    lat = cache_access(cache_il2, cmd, baddr, NULL, bsize,
-        /* now */now, /* pudata */NULL, /* repl addr */NULL);
-
-    /* Wattch -- Dcache2 access */
-    dcache2_access++;
-
-    if (cmd == Read)
-      return lat;
-    else
-      panic("writes to instruction memory not supported");
-  }
-  else
-  {
-    /* access main memory */
-    if (cmd == Read)
-      return mem_access_latency(bsize);
-    else
-      panic("writes to instruction memory not supported");
-  }
-}
 
