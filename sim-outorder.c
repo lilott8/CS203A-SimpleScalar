@@ -473,10 +473,10 @@ static int buffer_dl_lat;
 static int buffer_il_lat;
 
 /* our il buffer */
-struct cache_t *buffer_il;
+struct cache_t *buffer_il1;
 
 /* our dl buffer */
-struct cache_t *buffer_dl;
+struct cache_t *buffer_dl1;
 /******* End CS203A ***********/
 
 
@@ -1090,6 +1090,22 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
       cache_dl1 = cache_create(name, nsets, bsize, /* balloc */FALSE,
 			       /* usize */0, assoc, cache_char2policy(c),
 			       dl1_access_fn, /* hit lat */cache_dl1_lat);
+      /**
+        * cs203a
+        *   Create a buffer for our dl1 cache
+        *   name: arbitrary name?
+        *   number of sets: default for the dl1, 128
+        *   block size: default for the dl1, 32
+        *   block allocation: FALSE
+        *   user-size: 0
+        *   associativity: Directly mapped or 1
+        *   cache policy: fifo or 'f'
+        *   hit latency: 1
+        */
+      buffer_dl1 = cache_create('buffer_dl1', 128, 32, /* balloc */FALSE,
+            /* usize */0, 1, cache_char2policy('f'),
+            dl1_buffer_access_fn, /* hit lat */buffer_dl1_lat);
+      /********* end cs203a *********/
 
       /* is the level 2 D-cache defined? */
       if (!mystricmp(cache_dl2_opt, "none"))
@@ -1146,6 +1162,23 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
       cache_il1 = cache_create(name, nsets, bsize, /* balloc */FALSE,
 			       /* usize */0, assoc, cache_char2policy(c),
 			       il1_access_fn, /* hit lat */cache_il1_lat);
+
+      /**
+        * cs203a
+        *   Create a buffer for our il1 cache
+        *   name: arbitrary name?
+        *   number of sets: default for the il1, 512
+        *   block size: default for the il1, 32
+        *   block allocation: FALSE
+        *   user-size: 0
+        *   associativity: Directly mapped or 1
+        *   cache policy: fifo or 'f'
+        *   hit latency: 1
+        */
+      buffer_il1 = cache_create('buffer_il1', 512, 32, /* balloc */FALSE,
+            /* usize */0, 1, cache_char2policy('f'),
+            il1_buffer_access_fn, /* hit lat */buffer_il1_lat);
+      /********* end cs203a *********/
 
       /* is the level 2 D-cache defined? */
       if (!mystricmp(cache_il2_opt, "none"))
