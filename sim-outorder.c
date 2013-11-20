@@ -459,6 +459,26 @@ mem_access_latency(int blk_sz)		/* block size accessed */
 	  (/* remainder chunk latency */mem_lat[1] * (chunks - 1)));
 }
 
+/******** CS203A buffer ********/
+/* il_buffer config */
+static char *buffer_il_opt;
+
+/* dl_buffer config */
+static char *buffer_dl_opt;
+
+/* latency for our dl_buffer */
+static int buffer_dl_lat;
+
+/* latency for our il_buffer */
+static int buffer_il_lat;
+
+/* our il buffer */
+struct cache_t *buffer_il;
+
+/* our dl buffer */
+struct cache_t *buffer_dl;
+/******* End CS203A ***********/
+
 
 /*
  * cache miss handlers
