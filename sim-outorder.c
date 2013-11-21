@@ -1555,7 +1555,7 @@ sim_reg_stats(struct stat_sdb_t *sdb)   /* stats database */
   //fprintf(sdb,"%s\n","CS203A Project Phase 2 Statistics");
   //char buf[512];
   //sprintf(buf,"%","CS203A Statistics");
-  stat_reg_formula(sdb,"CS203A Statistics","***********","203",NULL);
+  stat_reg_formula(sdb,"*************************","*************************","CS203 Statistics",NULL);
   
   if (buffer_dl1){
     cache_reg_stats(buffer_dl1, sdb);
