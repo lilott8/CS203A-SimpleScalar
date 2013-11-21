@@ -1548,6 +1548,15 @@ sim_reg_stats(struct stat_sdb_t *sdb)   /* stats database */
   }
   ld_reg_stats(sdb);
   mem_reg_stats(mem, sdb);
+  /*
+    CS 203a Project Phase 2 Statistics 
+   */
+  printf("CS 203a Project Phase 2 Statistics 
+\n");
+  if (buffer_dl1)
+    cache_reg_stats(buffer_dl1, sdb);
+  if (buffer_il1)
+    cache_reg_stats(buffer_il1, sdb);
 }
 
 /* forward declarations */
