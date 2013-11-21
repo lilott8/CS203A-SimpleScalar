@@ -286,8 +286,8 @@ counter_t resultbus_total_pop_count_cycle=0;
 counter_t resultbus_num_pop_count_cycle=0;
 
 /**
-  * CS203A Adding counters for our accesses
-  */
+ * CS203A Adding counters for our accesses
+ */
 counter_t dcache_buffer_access=0;
 counter_t icache_buffer_access=0;
 /** End CS203A **/
@@ -508,11 +508,17 @@ dl1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
 
   if (buffer_dl1)
   {
+    /**
+     * CS203A interjected our buffer between L1 and L2
+     */
     /* access next level of data cache hierarchy */
     lat = cache_access(buffer_dl1, cmd, baddr, NULL, bsize,
         /* now */now, /* pudata */NULL, /* repl addr */NULL);
 
     /* Wattch -- Dcache2 access */
+    /**
+     * CS203A increment our buffer access
+     */
     dcache_buffer_access++;
 
     if (cmd == Read)
@@ -569,10 +575,16 @@ il1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
 
   if (buffer_il1)
   {
+    /**
+     * CS203A interjected our buffer between L1 and L2
+     */
     /* access next level of inst cache hierarchy */
     lat = cache_access(buffer_il1, cmd, baddr, NULL, bsize,
         /* now */now, /* pudata */NULL, /* repl addr */NULL);
 
+    /**
+     * CS203A increment our buffer access
+     */
     /* Wattch -- Dcache2 access */
     icache_buffer_access++;
 
@@ -636,10 +648,10 @@ dl1_buffer_access_fn(enum mem_cmd cmd,   /* access cmd, Read or Write */
 }
 
 /**
-  * CS203a
-  * This will need to be altered to allow for our
-  *  il1 cache to buffer to il2 cache
-  */
+ * CS203a
+ * This will need to be altered to allow for our
+ *  il1 cache to buffer to il2 cache
+ */
 /* l1 inst cache l1 block miss handler function */
   static unsigned int     /* latency of block access */
 il1_buffer_access_fn(enum mem_cmd cmd,   /* access cmd, Read or Write */
@@ -1555,17 +1567,17 @@ sim_reg_stats(struct stat_sdb_t *sdb)   /* stats database */
   ld_reg_stats(sdb);
   mem_reg_stats(mem, sdb);
   /*
-    CS203A Project Phase 2 Statistics 
-   */
+     CS203A Project Phase 2 Statistics 
+     */
   //printf("%s\n","CS203A Project Phase 2 Statistics");
   //fprintf(sdb,"%s\n","CS203A Project Phase 2 Statistics");
   //char buf[512];
   //sprintf(buf,"%","CS203A Statistics");
   stat_reg_formula(sdb,"*************************CS","Statistics","203",NULL);
-  
+
   if (buffer_dl1){
     cache_reg_stats(buffer_dl1, sdb);
-    }
+  }
   if (buffer_il1){
     cache_reg_stats(buffer_il1, sdb);
   }
