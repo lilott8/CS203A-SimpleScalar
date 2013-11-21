@@ -637,8 +637,10 @@ dl1_buffer_access_fn(enum mem_cmd cmd,   /* access cmd, Read or Write */
   else
   {
     /* access main memory */
-    if (cmd == Read)
+    if (cmd == Read) {
+    // Put our for loop here
       return mem_access_latency(bsize);
+      }
     else
     {
       /* FIXME: unlimited write buffers */
