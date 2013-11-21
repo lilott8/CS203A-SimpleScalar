@@ -202,6 +202,12 @@ struct cache_t *buffer_il1;
 
 /* our dl buffer */
 struct cache_t *buffer_dl1;
+
+/* our dl buffer numset variable */
+static int buffer_dl1_numsets = 4;
+
+/* our il buffer numset variable */
+static int buffer_il1_numsets = 4;
 /******* End CS203A ***********/
 
 /* flush caches on system calls */
@@ -1183,7 +1189,7 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
      * cs203a
      *   Create a buffer for our dl1 cache
      *   name: arbitrary name?
-     *   number of sets: default for the dl1, 128
+     *   number of sets: defined by buffer_dl1_numsets
      *   block size: default for the dl1, 32
      *   block allocation: FALSE
      *   user-size: 0
@@ -1191,7 +1197,7 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
      *   cache policy: fifo or 'f'
      *   hit latency: 1
      */
-    buffer_dl1 = cache_create("buffer_dl1", 128, 32, /* balloc */FALSE,
+    buffer_dl1 = cache_create("buffer_dl1", buffer_dl1_numsets, 32, /* balloc */FALSE,
         /* usize */0, 1, cache_char2policy('f'),
         dl1_buffer_access_fn, /* hit lat */buffer_dl1_lat);
     /********* end cs203a *********/
@@ -1256,7 +1262,7 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
      * cs203a
      *   Create a buffer for our il1 cache
      *   name: arbitrary name?
-     *   number of sets: default for the il1, 512
+     *   number of sets: defined by buffer_il1_numsets
      *   block size: default for the il1, 32
      *   block allocation: FALSE
      *   user-size: 0
@@ -1264,7 +1270,7 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
      *   cache policy: fifo or 'f'
      *   hit latency: 1
      */
-    buffer_il1 = cache_create("buffer_il1", 512, 32, /* balloc */FALSE,
+    buffer_il1 = cache_create("buffer_il1", buffer_il1_numsets, 32, /* balloc */FALSE,
         /* usize */0, 1, cache_char2policy('f'),
         il1_buffer_access_fn, /* hit lat */buffer_il1_lat);
     /********* end cs203a *********/
