@@ -279,6 +279,13 @@ counter_t regfile_num_pop_count_cycle=0;
 counter_t resultbus_total_pop_count_cycle=0;
 counter_t resultbus_num_pop_count_cycle=0;
 
+/**
+  * CS203A Adding counters for our accesses
+  */
+counter_t dcache_buffer_access=0;
+counter_t icache_buffer_access=0;
+/** End CS203A **/
+
 /* text-based stat profiles */
 #define MAX_PCSTAT_VARS 8
 static int pcstat_nelt = 0;
@@ -493,14 +500,14 @@ dl1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
 {
   unsigned int lat;
 
-  if (cache_dl2)
+  if (buffer_dl1)
   {
     /* access next level of data cache hierarchy */
-    lat = cache_access(cache_dl2, cmd, baddr, NULL, bsize,
+    lat = cache_access(buffer_dl1, cmd, baddr, NULL, bsize,
         /* now */now, /* pudata */NULL, /* repl addr */NULL);
 
     /* Wattch -- Dcache2 access */
-    dcache2_access++;
+    dcache_buffer_access++;
 
     if (cmd == Read)
       return lat;
@@ -554,14 +561,14 @@ il1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
 {
   unsigned int lat;
 
-  if (cache_il2)
+  if (buffer_il1)
   {
     /* access next level of inst cache hierarchy */
-    lat = cache_access(cache_il2, cmd, baddr, NULL, bsize,
+    lat = cache_access(buffer_il1, cmd, baddr, NULL, bsize,
         /* now */now, /* pudata */NULL, /* repl addr */NULL);
 
     /* Wattch -- Dcache2 access */
-    dcache2_access++;
+    icache_buffer_access++;
 
     if (cmd == Read)
       return lat;
