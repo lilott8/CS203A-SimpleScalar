@@ -632,7 +632,7 @@ il1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
     /* access next level of inst cache hierarchy */
     lat = cache_access(buffer_il1, cmd, baddr, NULL, bsize,
         /* now */now, /* pudata */NULL, /* repl addr */NULL);
-
+    
     /**
      * CS203A increment our buffer access
      */
@@ -1671,6 +1671,9 @@ sim_reg_stats(struct stat_sdb_t *sdb)   /* stats database */
   if (buffer_il1){
     cache_reg_stats(buffer_il1, sdb);
   }
+  stat_reg_formula(sdb, "sim_CPI",
+      "cycles per instruction",
+      "sim_cycle / sim_num_insn", /* format */NULL);
 }
 
 /* forward declarations */
