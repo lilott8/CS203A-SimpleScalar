@@ -274,7 +274,10 @@
 #define Vt		(1.09 * VTSCALE)
 #define Vbitsense	(0.10 * SSCALE)
 
-#define Powerfactor (Mhz)*Vdd*Vdd
+/*#define Powerfactor (Mhz)*Vdd*Vdd*/
+double FSF = 1.0; //CS203a
+double VSF = 1.0; //CS203a
+define Powerfactor FSF*(Mhz)*VSF*VSF*Vdd*Vdd//CS203a
 
 #define SensePowerfactor3 (Mhz)*(Vbitsense)*(Vbitsense)
 #define SensePowerfactor2 (Mhz)*(Vbitpre-Vbitsense)*(Vbitpre-Vbitsense)
@@ -408,7 +411,7 @@
 /* normalize to cap from W */
 #define NORMALIZE_SCALE (1.0/(733.0e6*1.45*1.45))
 /* normalize .18um cap to other gen's cap, then xPowerfactor */
-#define POWER_SCALE    (GEN_POWER_SCALE * NORMALIZE_SCALE * Powerfactor)
+#define POWER_SCALE(f,v)    (GEN_POWER_SCALE * NORMALIZE_SCALE * Powerfactor)
 #define I_ADD          ((.37 - .091) * POWER_SCALE)
 #define I_ADD32        (((.37 - .091)/2)*POWER_SCALE)
 #define I_MULT16       ((.31-.095)*POWER_SCALE)

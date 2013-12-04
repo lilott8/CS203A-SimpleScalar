@@ -49,7 +49,7 @@
 
 #define SensePowerfactor (Mhz)*(Vdd/2)*(Vdd/2)
 #define Sense2Powerfactor (Mhz)*(2*.3+.1*Vdd)
-#define Powerfactor (Mhz)*Vdd*Vdd
+#define Powerfactor FSF*(Mhz)*VSF*VSF*Vdd*Vdd //CS203a
 #define LowSwingPowerfactor (Mhz)*.2*.2
 /* set scale for crossover (vdd->gnd) currents */
 double crossover_scaling = 1.2;
