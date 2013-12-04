@@ -254,6 +254,11 @@ int data_width = 64;
 /* static power model results */
 extern power_result_type power;
 
+/* CS203a Part 2 */
+double DVFS_TP; 
+double DVFS_Interval;
+/* end of CS203a Part 2 */
+
 /* counters added for Wattch */
 counter_t rename_access=0;
 counter_t bpred_access=0;
@@ -1054,6 +1059,23 @@ sim_reg_options(struct opt_odb_t *odb)
   opt_reg_flag(odb, "-bugcompat",
       "operate in backward-compatible bugs mode (for testing only)",
       &bugcompat_mode, /* default */FALSE, /* print */TRUE, NULL);
+
+  //CS203a begin part2
+  opt_reg_note(odb,
+      "\DVFS Controller\n"
+      "\n"
+      "Options:\n"
+      "-DVFSInterval: This is the number of cyles (N) that defines DVFS power\n"
+      "               monitoring interval. Default value is 100K cycles."
+      "-DVFSTargetPower: This is the target power budget that the DVFS\n"
+      "                  controller will try to achieve at each interval.\n"
+      "                  Default value will turn off the DVFS Controller"
+      );
+  opt_reg_double(odb,"-DVFSTargetPower","Target Power",&DVFS_TP,/* default */-1.0,
+		 /* print */TRUE, /* format */NULL);
+  opt_reg_int(odb,"-DVFSInterval","Target Power",&DVFS_Interval,/* default */100000,
+		 /* print */TRUE, /* format */NULL);
+  //CS203a end part2
 }
 
 /* check simulator-specific option values */
