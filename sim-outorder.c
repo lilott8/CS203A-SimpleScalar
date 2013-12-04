@@ -622,7 +622,12 @@ dl1_buffer_access_fn(enum mem_cmd cmd,   /* access cmd, Read or Write */
     /* access next level of data cache hierarchy */
     lat = cache_access(cache_dl2, cmd, baddr, NULL, bsize,
         /* now */now, /* pudata */NULL, /* repl addr */NULL);
-
+    // Grab the next n lines from L2 cache
+    int x;
+    for(x=1;x<=buffer_dl1_numsets;x++) {
+      lat+= cache_access(cache_il2, cmd, baddr+(cache_dl2->bsize)*x, NULL< bsize,
+          /*now*/ now, /*pudata*/NULL, /* repl addr */NULL);
+    }
     /* Wattch -- Dcache2 access */
     dcache2_access++;
 
@@ -638,9 +643,9 @@ dl1_buffer_access_fn(enum mem_cmd cmd,   /* access cmd, Read or Write */
   {
     /* access main memory */
     if (cmd == Read) {
-    // Put our for loop here
+      // Put our for loop here
       return mem_access_latency(bsize);
-      }
+    }
     else
     {
       /* FIXME: unlimited write buffers */
@@ -648,6 +653,10 @@ dl1_buffer_access_fn(enum mem_cmd cmd,   /* access cmd, Read or Write */
     }
   }
 }
+/**************************************************
+* End CS203A
+***************************************************/
+
 
 /**
  * CS203a
@@ -670,6 +679,12 @@ il1_buffer_access_fn(enum mem_cmd cmd,   /* access cmd, Read or Write */
     lat = cache_access(cache_il2, cmd, baddr, NULL, bsize,
         /* now */now, /* pudata */NULL, /* repl addr */NULL);
 
+    // This pulls subsequent lines into our buffer, until our buffer is filled
+    int x;
+    for(x=1;x<=buffer_il1_numsets;x++) {
+      lat+= cache_access(cache_il2, cmd, baddr+(cache_il2->bsize)*x, NULL< bsize,
+          /*now*/ now, /*pudata*/NULL, /* repl addr */NULL);
+    }
     /* Wattch -- Dcache2 access */
     dcache2_access++;
 
@@ -687,6 +702,10 @@ il1_buffer_access_fn(enum mem_cmd cmd,   /* access cmd, Read or Write */
       panic("writes to instruction memory not supported");
   }
 }
+/***************************************************
+ *  End CS203A
+ ****************************************************/
+
 
 /* l2 inst cache block miss handler function */
   static unsigned int			/* latency of block access */
