@@ -529,6 +529,22 @@ dl1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
       return 0;
     }
   }
+  else if(cache_dl2) {
+    /* access next level of data cache hierarchy */
+    lat = cache_access(cache_dl2, cmd, baddr, NULL, bsize,
+        /* now */now, /* pudata */NULL, /* repl addr */NULL);
+
+    /* Wattch -- Dcache2 access */
+    dcache2_access++;
+
+    if (cmd == Read)
+      return lat;
+    else
+    {
+      /* FIXME: unlimited write buffers */
+      return 0;
+    }
+  }
   else
   {
     /* access main memory */
@@ -593,6 +609,22 @@ il1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
     else
       panic("writes to instruction memory not supported");
   }
+  else if(cache_il2) {
+    /* access next level of data cache hierarchy */
+    lat = cache_access(cache_il2, cmd, baddr, NULL, bsize,
+        /* now */now, /* pudata */NULL, /* repl addr */NULL);
+
+    /* Wattch -- Dcache2 access */
+    dcache2_access++;    
+
+    if (cmd == Read)           
+      return lat;               
+    else                              
+    {                                   
+      /* FIXME: unlimited write buffers */  
+      return 0;                                 
+    }                                             
+  }
   else
   {
     /* access main memory */
@@ -655,8 +687,8 @@ dl1_buffer_access_fn(enum mem_cmd cmd,   /* access cmd, Read or Write */
   }
 }
 /**************************************************
-* End CS203A
-***************************************************/
+ * End CS203A
+ ***************************************************/
 
 
 /**
