@@ -256,7 +256,7 @@ extern power_result_type power;
 
 /* CS203a Part 2 */
 double DVFS_TP; 
-double DVFS_Interval;
+int DVFS_Interval;
 /* end of CS203a Part 2 */
 
 /* counters added for Wattch */
