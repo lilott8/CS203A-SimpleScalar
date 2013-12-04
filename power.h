@@ -277,7 +277,7 @@
 /*#define Powerfactor (Mhz)*Vdd*Vdd*/
 double FSF = 1.0; //CS203a
 double VSF = 1.0; //CS203a
-define Powerfactor FSF*(Mhz)*VSF*VSF*Vdd*Vdd//CS203a
+#define Powerfactor FSF*(Mhz)*VSF*VSF*Vdd*Vdd//CS203a
 
 #define SensePowerfactor3 (Mhz)*(Vbitsense)*(Vbitsense)
 #define SensePowerfactor2 (Mhz)*(Vbitpre-Vbitsense)*(Vbitpre-Vbitsense)
