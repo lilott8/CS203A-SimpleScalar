@@ -1,5 +1,5 @@
 #!/bin/sh
-git pull
+git pull origin Part2_DVFS
 make
 make config-alpha
 make sim-outorder
