@@ -208,6 +208,10 @@ static int buffer_dl1_numsets = 4;
 
 /* our il buffer numset variable */
 static int buffer_il1_numsets = 4;
+
+/** This is effectively our valid bit for our stream buffers */
+md_addr_t previous_data_baddr = 0;
+md_addr_t previous_inst_baddr = 0;
 /******* End CS203A ***********/
 
 /* flush caches on system calls */
@@ -506,20 +510,52 @@ dl1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
 {
   unsigned int lat;
 
+  /*---------------------------------------cs203a begin--------------------------------------*/
   if (buffer_dl1)
   {
-    /**
-     * CS203A interjected our buffer between L1 and L2
-     */
-    /* access next level of data cache hierarchy */
-    lat = cache_access(buffer_dl1, cmd, baddr, NULL, bsize,
-        /* now */now, /* pudata */NULL, /* repl addr */NULL);
+    if (baddr == previous_data_baddr+buffer_dl1->bsize) //sequential miss
+    {
+      lat = cache_access(buffer_dl1, cmd, baddr, NULL, bsize,
+          /* now */now, /* pudata */NULL, /* repl addr */NULL);
+    }
+    else //flush stream buffer and refill buffer
+    {
+      cache_flush(buffer_dl1, now);
 
-    /* Wattch -- Dcache2 access */
-    /**
-     * CS203A increment our buffer access
-     */
-    dcache_buffer_access++;
+      cache_access(buffer_dl1, cmd, baddr, NULL, bsize, now, NULL, NULL);
+      previous_data_baddr = baddr;
+
+      //block not in stream buffer
+      if (cache_il2)
+      {
+        /* access next level of data cache hierarchy */
+        lat = cache_access(cache_il2, cmd, baddr, NULL, bsize,
+            /* now */now, /* pudata */NULL, /* repl addr */NULL);
+
+        /* Wattch -- Dcache2 access */
+        dcache2_access++;
+
+        if (cmd == Read)
+          return lat;
+        else
+        {
+          /* FIXME: unlimited write buffers */
+          return 0;
+        }
+      }
+      else
+      {
+        /* access main memory */
+        if (cmd == Read)
+          return mem_access_latency(bsize);
+        else
+        {
+          /* FIXME: unlimited write buffers */
+          return 0;
+        }
+      }
+    }
+    previous_data_baddr = baddr;
 
     if (cmd == Read)
       return lat;
@@ -529,9 +565,10 @@ dl1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
       return 0;
     }
   }
-  else if(cache_dl2) {
-    /* access next level of data cache hierarchy */
-    lat = cache_access(cache_dl2, cmd, baddr, NULL, bsize,
+  else if (cache_il2)
+  {
+    /* access next level of inst cache hierarchy */
+    lat = cache_access(cache_il2, cmd, baddr, NULL, bsize,
         /* now */now, /* pudata */NULL, /* repl addr */NULL);
 
     /* Wattch -- Dcache2 access */
@@ -540,10 +577,7 @@ dl1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
     if (cmd == Read)
       return lat;
     else
-    {
-      /* FIXME: unlimited write buffers */
-      return 0;
-    }
+      panic("writes to instruction memory not supported");
   }
   else
   {
@@ -551,12 +585,13 @@ dl1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
     if (cmd == Read)
       return mem_access_latency(bsize);
     else
-    {
-      /* FIXME: unlimited write buffers */
-      return 0;
-    }
+      panic("writes to instruction memory not supported");
   }
 }
+/*************************************************************
+* End cs203A
+**************************************************************/
+
 
 /* l2 data cache block miss handler function */
   static unsigned int			/* latency of block access */
