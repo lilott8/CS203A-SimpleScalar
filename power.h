@@ -411,7 +411,7 @@ double VSF = 1.0; //CS203a
 /* normalize to cap from W */
 #define NORMALIZE_SCALE (1.0/(733.0e6*1.45*1.45))
 /* normalize .18um cap to other gen's cap, then xPowerfactor */
-#define POWER_SCALE(f,v)    (GEN_POWER_SCALE * NORMALIZE_SCALE * Powerfactor)
+#define POWER_SCALE    (GEN_POWER_SCALE * NORMALIZE_SCALE * Powerfactor)
 #define I_ADD          ((.37 - .091) * POWER_SCALE)
 #define I_ADD32        (((.37 - .091)/2)*POWER_SCALE)
 #define I_MULT16       ((.31-.095)*POWER_SCALE)
