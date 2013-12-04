@@ -1,5 +1,5 @@
 #!/bin/sh
-git pull
+#git pull
 make
 make config-alpha
 make sim-outorder

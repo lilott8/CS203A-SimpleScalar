@@ -625,7 +625,8 @@ dl1_buffer_access_fn(enum mem_cmd cmd,   /* access cmd, Read or Write */
     // Grab the next n lines from L2 cache
     int x;
     for(x=1;x<=buffer_dl1_numsets;x++) {
-      lat+= cache_access(cache_il2, cmd, baddr+(cache_dl2->bsize)*x, NULL< bsize,
+      baddr += buffer_dl1->bsize;
+      lat+= cache_access(cache_il2, cmd, baddr, NULL, bsize,
           /*now*/ now, /*pudata*/NULL, /* repl addr */NULL);
     }
     /* Wattch -- Dcache2 access */
@@ -682,7 +683,8 @@ il1_buffer_access_fn(enum mem_cmd cmd,   /* access cmd, Read or Write */
     // This pulls subsequent lines into our buffer, until our buffer is filled
     int x;
     for(x=1;x<=buffer_il1_numsets;x++) {
-      lat+= cache_access(cache_il2, cmd, baddr+(cache_il2->bsize)*x, NULL< bsize,
+      baddr += buffer_il1->bsize;
+      lat+= cache_access(cache_il2, cmd, baddr, NULL, bsize,
           /*now*/ now, /*pudata*/NULL, /* repl addr */NULL);
     }
     /* Wattch -- Dcache2 access */
