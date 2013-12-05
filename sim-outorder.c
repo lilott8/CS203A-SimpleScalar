@@ -691,7 +691,8 @@ dl1_buffer_access_fn(enum mem_cmd cmd,   /* access cmd, Read or Write */
         /* now */now, /* pudata */NULL, /* repl addr */NULL);
     // Grab the next n lines from L2 cache
     int x;
-    for(x=1;x<=buffer_dl1_numsets;x++) {
+    for(x=0;x<=buffer_dl1_numsets;x++) {
+      //printf("Accessing the cache: " + x);
       baddr += buffer_dl1->bsize;
       lat+= cache_access(cache_il2, cmd, baddr, NULL, bsize,
           /*now*/ now, /*pudata*/NULL, /* repl addr */NULL);
