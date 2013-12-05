@@ -274,10 +274,13 @@
 #define Vt		(1.09 * VTSCALE)
 #define Vbitsense	(0.10 * SSCALE)
 
-/*#define Powerfactor (Mhz)*Vdd*Vdd*/
-double FSF = 1.0; //CS203a
-double VSF = 1.0; //CS203a
-#define Powerfactor FSF*(Mhz)*VSF*VSF*Vdd*Vdd//CS203a
+//#define Powerfactor (Mhz)*Vdd*Vdd
+/* CS 203a Partb */
+#define FSF 1.0;
+#define VSF 1.0;
+#define Powerfactor FSF*(Mhz)*VSF*VSF*Vdd*Vdd
+/* end of CS 203a Partb */
+
 
 #define SensePowerfactor3 (Mhz)*(Vbitsense)*(Vbitsense)
 #define SensePowerfactor2 (Mhz)*(Vbitpre-Vbitsense)*(Vbitpre-Vbitsense)
