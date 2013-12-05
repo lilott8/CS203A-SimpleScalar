@@ -1070,6 +1070,22 @@ sim_reg_options(struct opt_odb_t *odb)
       &cache_il2_opt, "dl2",
       /* print */TRUE, NULL);
 
+/****************************************
+* CS203A
+*****************************************/
+opt_reg_string(odb, "-cache:buffer_il",
+"-cache:buffer_il <size>",
+&buffer_il1_opt, "0",
+FALSE, NULL);
+
+opt_reg_string(odb, "-cache:buffer_dl",
+"-cache:buffer_dl <size>",
+&buffer_dl1_opt, "0",
+FALSE, NULL);
+
+/****************************************
+* END CS203A
+*****************************************/
   opt_reg_int(odb, "-cache:il2lat",
       "l2 instruction cache hit latency (in cycles)",
       &cache_il2_lat, /* default */6,
@@ -1288,22 +1304,6 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
     cache_dl1 = cache_create(name, nsets, bsize, /* balloc */FALSE,
         /* usize */0, assoc, cache_char2policy(c),
         dl1_access_fn, /* hit lat */cache_dl1_lat);
-    /**
-     * cs203a
-     *   Create a buffer for our dl1 cache
-     *   name: arbitrary name?
-     *   number of sets: defined by buffer_dl1_numsets
-     *   block size: default for the dl1, 32
-     *   block allocation: FALSE
-     *   user-size: 0
-     *   associativity: Directly mapped or 1
-     *   cache policy: fifo or 'f'
-     *   hit latency: 1
-     */
-    buffer_dl1 = cache_create("buffer_dl1", buffer_dl1_numsets, 32, /* balloc */FALSE,
-        /* usize */0, 1, cache_char2policy('f'),
-        dl1_buffer_access_fn, /* hit lat */buffer_dl1_lat);
-    /********* end cs203a *********/
 
     /* is the level 2 D-cache defined? */
     if (!mystricmp(cache_dl2_opt, "none"))
@@ -1362,41 +1362,88 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
         il1_access_fn, /* hit lat */cache_il1_lat);
 
     /**
-     * cs203a
-     *   Create a buffer for our il1 cache
+     * CS203a
+     *   Create a buffer for our {d|i}l1 cache
      *   name: arbitrary name?
-     *   number of sets: defined by buffer_il1_numsets
-     *   block size: default for the il1, 32
+     *   number of sets: defined by buffer_{d|i}l1_numsets
+     *   block size: default for the {d|i}l1, 32
      *   block allocation: FALSE
      *   user-size: 0
      *   associativity: Directly mapped or 1
      *   cache policy: fifo or 'f'
      *   hit latency: 1
      */
+  if(mystricmp(buffer_il1_opt, "none")) {
+    int bil1_size = 0;
+    if (sscanf(bil1_opt, "%d", &bil1_size) != 1) {
+      fatal("Bad I-stream buffer params: <size>");
+    }
+    
+    if(bil1_size !=1 && bil1_size != 2 && bil1_size != 4 && bil1_size != 8) {
+      fatal("Stream buffer is not the correct size: 0, 2, 4, 8");
+    }
+
+    if(bil1_size == 0) {
+      buffer_il1 = NULL;
+    } else {
     buffer_il1 = cache_create("buffer_il1", buffer_il1_numsets, 32, /* balloc */FALSE,
         /* usize */0, 1, cache_char2policy('f'),
         il1_buffer_access_fn, /* hit lat */buffer_il1_lat);
-    /********* end cs203a *********/
+    }
+  } else {
+    buffer_il1 = NULL;
+  }
+  // For our dl buffer
+  if(mystricmp(buffer_dl1_opt, "none")) {
+    int bdl1_size = 0;
+    if (sscanf(bdl1_opt, "%d", &bdl1_size) != 1) {
+      fatal("Bad D-stream buffer params: <size>");
+    }
 
-    /* is the level 2 D-cache defined? */
-    if (!mystricmp(cache_il2_opt, "none"))
-      cache_il2 = NULL;
-    else if (!mystricmp(cache_il2_opt, "dl2"))
-    {
-      if (!cache_dl2)
-        fatal("I-cache l2 cannot access D-cache l2 as it's undefined");
-      cache_il2 = cache_dl2;
+    if(bdl1_size !=1 && bdl1_size != 2 && bdl1_size != 4 && bdl1_size != 8) {
+      fatal("Stream buffer is not the correct size: 0, 2, 4, 8");
     }
-    else
-    {
-      if (sscanf(cache_il2_opt, "%[^:]:%d:%d:%d:%c",
-            name, &nsets, &bsize, &assoc, &c) != 5)
-        fatal("bad l2 I-cache parms: "
-            "<name>:<nsets>:<bsize>:<assoc>:<repl>");
-      cache_il2 = cache_create(name, nsets, bsize, /* balloc */FALSE,
-          /* usize */0, assoc, cache_char2policy(c),
-          il2_access_fn, /* hit lat */cache_il2_lat);
+
+    if(bdl1_size == 0) {
+      buffer_dl1 = NULL;
+    } else {
+      buffer_dl1 = cache_create("buffer_dl1", buffer_dl1_numsets, 32, /* balloc */FALSE,
+          /* usize */0, 1, cache_char2policy('f'),
+          dl1_buffer_access_fn, /* hit lat */buffer_dl1_lat);
     }
+  } else {
+    buffer_dl1 = NULL;
+  }
+  /********* end CS203a *********/
+
+
+
+
+
+
+
+
+
+
+  /* is the level 2 D-cache defined? */
+  if (!mystricmp(cache_il2_opt, "none"))
+    cache_il2 = NULL;
+  else if (!mystricmp(cache_il2_opt, "dl2"))
+  {
+    if (!cache_dl2)
+      fatal("I-cache l2 cannot access D-cache l2 as it's undefined");
+    cache_il2 = cache_dl2;
+  }
+  else
+  {
+    if (sscanf(cache_il2_opt, "%[^:]:%d:%d:%d:%c",
+          name, &nsets, &bsize, &assoc, &c) != 5)
+      fatal("bad l2 I-cache parms: "
+          "<name>:<nsets>:<bsize>:<assoc>:<repl>");
+    cache_il2 = cache_create(name, nsets, bsize, /* balloc */FALSE,
+        /* usize */0, assoc, cache_char2policy(c),
+        il2_access_fn, /* hit lat */cache_il2_lat);
+  }
   }
 
   /* use an I-TLB? */

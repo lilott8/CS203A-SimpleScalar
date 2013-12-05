@@ -1,10 +1,10 @@
 #!/bin/sh
 #git pull
 clear
-#rm -f *.o
-#make
-#make config-alpha
-#make sim-outorder
+rm -f *.o
+make
+make config-alpha
+make sim-outorder
 FILES=('./benchmarks/anagram.alpha words < anagram.in' './benchmarks/go.alpha 2 8 2stone9.in')
 CACHE_BSIZE=('32' '64' '128' '256')
 CACHE_REPLACE=('l')
