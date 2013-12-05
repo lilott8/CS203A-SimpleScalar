@@ -860,3 +860,12 @@ cache_flush_addr(struct cache_t *cp,	/* cache instance to flush */
   /* return latency of the operation */
   return lat;
 }
+/**************************
+* CS203A
+***************************/
+void setPrefetchSize(
+  struct cache_t *cp,/* cache instance */
+  int size ) /* size of prefetch */
+  {
+    cp->prefetch = size;
+  }

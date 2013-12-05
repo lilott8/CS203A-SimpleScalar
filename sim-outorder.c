@@ -1305,9 +1305,27 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
         /* usize */0, assoc, cache_char2policy(c),
         dl1_access_fn, /* hit lat */cache_dl1_lat);
 
+/*******************************
+* CS203A
+********************************/
     /* is the level 2 D-cache defined? */
     if (!mystricmp(cache_dl2_opt, "none"))
       cache_dl2 = NULL;
+    else if (!mystricmp(cache_dl2_opt, "dl2")) {
+      int prefetch;
+      if(sscanf(cache_dl2_opt, "%[^:]:%d:%d:%d:%c:%d",
+            name, &nsets, &bsize, &assoc, &c, &prefetch) != 6) {
+        prefetch = 0;
+        if (sscanf(cache_dl2_opt, "%[^:]:%d:%d:%d:%c",
+              name, &nsets, &bsize, &assoc, &c) != 5)
+          fatal("bad l2 D-cache parms: "
+              "<name>:<nsets>:<bsize>:<assoc>:<repl>");
+      }
+      cache_dl2 = cache_create(name, nsets, bsize, /* balloc */FALSE,
+          /* usize */0, assoc, cache_char2policy(c),
+          dl2_access_fn, /* hit lat */cache_dl2_lat);
+      setPrefetchSize(cache_dl2, prefetch);
+    }
     else
     {
       if (sscanf(cache_dl2_opt, "%[^:]:%d:%d:%d:%c",
@@ -1319,6 +1337,9 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
           dl2_access_fn, /* hit lat */cache_dl2_lat);
     }
   }
+/*******************************
+* END CS203A
+********************************/
 
   /* use a level 1 I-cache? */
   if (!mystricmp(cache_il1_opt, "none"))
@@ -1373,77 +1394,68 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
      *   cache policy: fifo or 'f'
      *   hit latency: 1
      */
-  if(mystricmp(buffer_il1_opt, "none")) {
-    int bil1_size = 0;
-    if (sscanf(buffer_il1_opt, "%d", &bil1_size) != 1) {
-      fatal("Bad I-stream buffer params: <size>");
-    }
-    
-    if(bil1_size !=1 && bil1_size != 2 && bil1_size != 4 && bil1_size != 8) {
-      fatal("Stream buffer is not the correct size: 0, 2, 4, 8");
-    }
+    if(mystricmp(buffer_il1_opt, "none")) {
+      int bil1_size = 0;
+      if (sscanf(buffer_il1_opt, "%d", &bil1_size) != 1) {
+        fatal("Bad I-stream buffer params: <size>");
+      }
 
-    if(bil1_size == 0) {
+      if(bil1_size !=1 && bil1_size != 2 && bil1_size != 4 && bil1_size != 8) {
+        fatal("Stream buffer is not the correct size: 0, 2, 4, 8");
+      }
+
+      if(bil1_size == 0) {
+        buffer_il1 = NULL;
+      } else {
+        buffer_il1 = cache_create("buffer_il1", buffer_il1_numsets, 32, /* balloc */FALSE,
+            /* usize */0, 1, cache_char2policy('f'),
+            il1_buffer_access_fn, /* hit lat */buffer_il1_lat);
+      }
+    } else {
       buffer_il1 = NULL;
+    }
+    // For our dl buffer
+    if(mystricmp(buffer_dl1_opt, "none")) {
+      int bdl1_size = 0;
+      if (sscanf(buffer_dl1_opt, "%d", &bdl1_size) != 1) {
+        fatal("Bad D-stream buffer params: <size>");
+      }
+
+      if(bdl1_size !=1 && bdl1_size != 2 && bdl1_size != 4 && bdl1_size != 8) {
+        fatal("Stream buffer is not the correct size: 0, 2, 4, 8");
+      }
+
+      if(bdl1_size == 0) {
+        buffer_dl1 = NULL;
+      } else {
+        buffer_dl1 = cache_create("buffer_dl1", buffer_dl1_numsets, 32, /* balloc */FALSE,
+            /* usize */0, 1, cache_char2policy('f'),
+            dl1_buffer_access_fn, /* hit lat */buffer_dl1_lat);
+      }
     } else {
-    buffer_il1 = cache_create("buffer_il1", buffer_il1_numsets, 32, /* balloc */FALSE,
-        /* usize */0, 1, cache_char2policy('f'),
-        il1_buffer_access_fn, /* hit lat */buffer_il1_lat);
-    }
-  } else {
-    buffer_il1 = NULL;
-  }
-  // For our dl buffer
-  if(mystricmp(buffer_dl1_opt, "none")) {
-    int bdl1_size = 0;
-    if (sscanf(buffer_dl1_opt, "%d", &bdl1_size) != 1) {
-      fatal("Bad D-stream buffer params: <size>");
-    }
-
-    if(bdl1_size !=1 && bdl1_size != 2 && bdl1_size != 4 && bdl1_size != 8) {
-      fatal("Stream buffer is not the correct size: 0, 2, 4, 8");
-    }
-
-    if(bdl1_size == 0) {
       buffer_dl1 = NULL;
-    } else {
-      buffer_dl1 = cache_create("buffer_dl1", buffer_dl1_numsets, 32, /* balloc */FALSE,
-          /* usize */0, 1, cache_char2policy('f'),
-          dl1_buffer_access_fn, /* hit lat */buffer_dl1_lat);
     }
-  } else {
-    buffer_dl1 = NULL;
-  }
-  /********* end CS203a *********/
+    /********* end CS203a *********/
 
-
-
-
-
-
-
-
-
-
-  /* is the level 2 D-cache defined? */
-  if (!mystricmp(cache_il2_opt, "none"))
-    cache_il2 = NULL;
-  else if (!mystricmp(cache_il2_opt, "dl2"))
-  {
-    if (!cache_dl2)
-      fatal("I-cache l2 cannot access D-cache l2 as it's undefined");
-    cache_il2 = cache_dl2;
-  }
-  else
-  {
-    if (sscanf(cache_il2_opt, "%[^:]:%d:%d:%d:%c",
-          name, &nsets, &bsize, &assoc, &c) != 5)
-      fatal("bad l2 I-cache parms: "
-          "<name>:<nsets>:<bsize>:<assoc>:<repl>");
-    cache_il2 = cache_create(name, nsets, bsize, /* balloc */FALSE,
-        /* usize */0, assoc, cache_char2policy(c),
-        il2_access_fn, /* hit lat */cache_il2_lat);
-  }
+    /* is the level 2 D-cache defined? */
+    if (!mystricmp(cache_il2_opt, "none"))
+      cache_il2 = NULL;
+    else if (!mystricmp(cache_il2_opt, "dl2"))
+    {
+      if (!cache_dl2)
+        fatal("I-cache l2 cannot access D-cache l2 as it's undefined");
+      cache_il2 = cache_dl2;
+    }
+    else
+    {
+      if (sscanf(cache_il2_opt, "%[^:]:%d:%d:%d:%c",
+            name, &nsets, &bsize, &assoc, &c) != 5)
+        fatal("bad l2 I-cache parms: "
+            "<name>:<nsets>:<bsize>:<assoc>:<repl>");
+      cache_il2 = cache_create(name, nsets, bsize, /* balloc */FALSE,
+          /* usize */0, assoc, cache_char2policy(c),
+          il2_access_fn, /* hit lat */cache_il2_lat);
+    }
   }
 
   /* use an I-TLB? */

@@ -31,6 +31,10 @@ PREFETCH=0
 BUFFERS=4
 fi
 
+echo $STDOUT
+echo $PREFETCH
+echo $BUFFERS
+
 for var in "${FILES[@]}"
 do
   P1="./sim-outorder -cache:buffer_il $BUFFERS -cache:buffer_dl $BUFFERS "
