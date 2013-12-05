@@ -1375,7 +1375,7 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
      */
   if(mystricmp(buffer_il1_opt, "none")) {
     int bil1_size = 0;
-    if (sscanf(bil1_opt, "%d", &bil1_size) != 1) {
+    if (sscanf(buffer_il1_opt, "%d", &bil1_size) != 1) {
       fatal("Bad I-stream buffer params: <size>");
     }
     
@@ -1396,7 +1396,7 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
   // For our dl buffer
   if(mystricmp(buffer_dl1_opt, "none")) {
     int bdl1_size = 0;
-    if (sscanf(bdl1_opt, "%d", &bdl1_size) != 1) {
+    if (sscanf(buffer_dl1_opt, "%d", &bdl1_size) != 1) {
       fatal("Bad D-stream buffer params: <size>");
     }
 

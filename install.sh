@@ -38,7 +38,7 @@ do
   P1="$P1 -cache:dl1 dl1:$L1 -cache:il1 il1:$L1 $var "
   if [ ${STDOUT} = 1 ]
   then
-    P1="$P1 > STDOUT-$COMPILERS[$I]-OUTFILE.std 2> $COMPILERS[$I].stat"
+    P1="$P1 > STDOUT-${COMPILERS[$I]}-OUTFILE.std 2> ${COMPILERS[$I]}.stat"
   fi
   $P1
   I=$((I+1))
