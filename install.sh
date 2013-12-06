@@ -46,6 +46,6 @@ do
     1=1
     #P1="$P1 > STDOUT-${COMPILERS[$I]}-OUTFILE.std 2> ${COMPILERS[$I]}.stat"
   fi
-  $P1
+  echo $P1
   I=$((I+1))
 done

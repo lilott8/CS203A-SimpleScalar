@@ -311,7 +311,13 @@ static char *pcstat_vars[MAX_PCSTAT_VARS];
 #define IACOMPRESS(A)		(A)
 #define ISCOMPRESS(SZ)		(SZ)
 #endif /* TARGET_PISA */
-
+/*********
+* CS203a
+**********/
+#define CACHE_BADDR(cp, addr) ((addr) & ~(cp)->blk_mask)
+/*********
+* END CS203a
+**********/
 /* operate in backward-compatible bugs mode (for testing only) */
 static int bugcompat_mode;
 
@@ -513,7 +519,7 @@ dl1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
   /*---------------------------------------cs203a begin--------------------------------------*/
   if (buffer_dl1)
   {
-    if (baddr == previous_data_baddr+buffer_dl1->bsize) //sequential miss
+    if (CACHE_BADDR(buffer_dl1, baddr) == CACHE_BADDR(buffer_dl1, buffer_dl1->previousBaddr+buffer_dl1->bsize)) //sequential miss
     {
       lat = cache_access(buffer_dl1, cmd, baddr, NULL, bsize,
           /* now */now, /* pudata */NULL, /* repl addr */NULL);
@@ -522,52 +528,22 @@ dl1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
     {
       cache_flush(buffer_dl1, now);
 
-      cache_access(buffer_dl1, cmd, baddr, NULL, bsize, now, NULL, NULL);
-      previous_data_baddr = baddr;
-
-      //block not in stream buffer
-      if (cache_il2)
-      {
-        /* access next level of data cache hierarchy */
-        lat = cache_access(cache_il2, cmd, baddr, NULL, bsize,
-            /* now */now, /* pudata */NULL, /* repl addr */NULL);
-
-        /* Wattch -- Dcache2 access */
-        dcache2_access++;
-
-        if (cmd == Read)
-          return lat;
-        else
-        {
-          /* FIXME: unlimited write buffers */
-          return 0;
-        }
-      }
-      else
-      {
-        /* access main memory */
-        if (cmd == Read)
-          return mem_access_latency(bsize);
-        else
-        {
-          /* FIXME: unlimited write buffers */
-          return 0;
-        }
-      }
+      lat = cache_access(buffer_dl1, cmd, baddr, NULL, bsize, now, NULL, NULL);
+      buffer_dl1->misses--;
     }
-    previous_data_baddr = baddr;
-
-    if (cmd == Read)
+    buffer_dl1->previousBaddr = baddr;
+    //block not in stream buffer
+    if(cmd == Read) {
       return lat;
-    else
-    {
+    } else {
       /* FIXME: unlimited write buffers */
       return 0;
     }
   }
+
   else if (cache_il2)
   {
-    /* access next level of inst cache hierarchy */
+    /* access next level of data cache hierarchy */
     lat = cache_access(cache_il2, cmd, baddr, NULL, bsize,
         /* now */now, /* pudata */NULL, /* repl addr */NULL);
 
@@ -577,7 +553,10 @@ dl1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
     if (cmd == Read)
       return lat;
     else
-      panic("writes to instruction memory not supported");
+    {
+      /* FIXME: unlimited write buffers */
+      return 0;
+    }
   }
   else
   {
@@ -585,12 +564,15 @@ dl1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
     if (cmd == Read)
       return mem_access_latency(bsize);
     else
-      panic("writes to instruction memory not supported");
+    {
+      /* FIXME: unlimited write buffers */
+      return 0;
+    }
   }
 }
 /*************************************************************
-* End CS203A
-**************************************************************/
+ * End CS203A
+ **************************************************************/
 
 
 /* l2 data cache block miss handler function */
@@ -626,39 +608,41 @@ il1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
 
   if (buffer_il1)
   {
-    /**
-     * CS203A interjected our buffer between L1 and L2
-     */
+    if(CACHE_BADDR(buffer_il1, baddr) == CACHE_BADDR(buffer_il1, buffer_il1->previousBaddr + buffer_il1->bsize)) {
+      /**
+       * CS203A interjected our buffer between L1 and L2
+       */
+      /* access next level of inst cache hierarchy */
+      lat = cache_access(buffer_il1, cmd, baddr, NULL, bsize,
+          /* now */now, /* pudata */NULL, /* repl addr */NULL);
+    } else {
+      cache_flush(buffer_il1, now);
+      lat = cache_access(buffer_il1, cmd, baddr, NULL, bsize,
+          /* now */now, /* pudata */NULL, /* repl addr */NULL);
+
+      buffer_il1->misses--;
+    }
+    buffer_il1->previousBaddr = baddr;
+    if (cmd == Read)
+      return lat;
+    else {
+      /** FIXME: unlimted write buffers */
+      return 0;
+    }
+  }
+  else if (cache_il2)
+  {
     /* access next level of inst cache hierarchy */
-    lat = cache_access(buffer_il1, cmd, baddr, NULL, bsize,
+    lat = cache_access(cache_il2, cmd, baddr, NULL, bsize,
         /* now */now, /* pudata */NULL, /* repl addr */NULL);
-    
-    /**
-     * CS203A increment our buffer access
-     */
+
     /* Wattch -- Dcache2 access */
-    icache_buffer_access++;
+    dcache2_access++;
 
     if (cmd == Read)
       return lat;
     else
       panic("writes to instruction memory not supported");
-  }
-  else if(cache_il2) {
-    /* access next level of data cache hierarchy */
-    lat = cache_access(cache_il2, cmd, baddr, NULL, bsize,
-        /* now */now, /* pudata */NULL, /* repl addr */NULL);
-
-    /* Wattch -- Dcache2 access */
-    dcache2_access++;    
-
-    if (cmd == Read)           
-      return lat;               
-    else                              
-    {                                   
-      /* FIXME: unlimited write buffers */  
-      return 0;                                 
-    }                                             
   }
   else
   {
@@ -668,6 +652,8 @@ il1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
     else
       panic("writes to instruction memory not supported");
   }
+
+
 }
 /**
  * CS203a 
@@ -1070,22 +1056,22 @@ sim_reg_options(struct opt_odb_t *odb)
       &cache_il2_opt, "dl2",
       /* print */TRUE, NULL);
 
-/****************************************
-* CS203A
-*****************************************/
-opt_reg_string(odb, "-cache:buffer_il",
-"-cache:buffer_il <size>",
-&buffer_il1_opt, "0",
-FALSE, NULL);
+  /****************************************
+   * CS203A
+   *****************************************/
+  opt_reg_string(odb, "-cache:buffer_il",
+      "-cache:buffer_il <size>",
+      &buffer_il1_opt, "0",
+      FALSE, NULL);
 
-opt_reg_string(odb, "-cache:buffer_dl",
-"-cache:buffer_dl <size>",
-&buffer_dl1_opt, "0",
-FALSE, NULL);
+  opt_reg_string(odb, "-cache:buffer_dl",
+      "-cache:buffer_dl <size>",
+      &buffer_dl1_opt, "0",
+      FALSE, NULL);
 
-/****************************************
-* END CS203A
-*****************************************/
+  /****************************************
+   * END CS203A
+   *****************************************/
   opt_reg_int(odb, "-cache:il2lat",
       "l2 instruction cache hit latency (in cycles)",
       &cache_il2_lat, /* default */6,
@@ -1305,9 +1291,9 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
         /* usize */0, assoc, cache_char2policy(c),
         dl1_access_fn, /* hit lat */cache_dl1_lat);
 
-/*******************************
-* CS203A
-********************************/
+    /*******************************
+     * CS203A
+     ********************************/
     /* is the level 2 D-cache defined? */
     if (!mystricmp(cache_dl2_opt, "none"))
       cache_dl2 = NULL;
@@ -1337,9 +1323,9 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
           dl2_access_fn, /* hit lat */cache_dl2_lat);
     }
   }
-/*******************************
-* END CS203A
-********************************/
+  /*******************************
+   * END CS203A
+   ********************************/
 
   /* use a level 1 I-cache? */
   if (!mystricmp(cache_il1_opt, "none"))
@@ -1409,7 +1395,7 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
         buffer_il1 = cache_create("buffer_il1", 1, bsize, /* balloc */FALSE,
             /* usize */0, bil1_size, cache_char2policy('f'),
             il1_buffer_access_fn, /* hit lat */buffer_il1_lat);
-            buffer_il1->isBuffer = 1; // this is a buffer, so we set it to 1/true
+        buffer_il1->isBuffer = 1; // this is a buffer, so we set it to 1/true
       }
     } else {
       buffer_il1 = NULL;
@@ -1431,7 +1417,7 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
         buffer_dl1 = cache_create("buffer_dl1", 1, bsize, /* balloc */FALSE,
             /* usize */0, bdl1_size, cache_char2policy('f'),
             dl1_buffer_access_fn, /* hit lat */buffer_dl1_lat);
-            buffer_dl1->isBuffer = 1; // this is a buffer, so we set it to 1/true
+        buffer_dl1->isBuffer = 1; // this is a buffer, so we set it to 1/true
       }
     } else {
       buffer_dl1 = NULL;

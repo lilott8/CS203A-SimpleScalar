@@ -158,6 +158,7 @@ struct cache_t
   unsigned int hit_latency;	/* cache hit latency */
   int prefetch;		// CS203a: prefetch size
   unsigned char isBuffer; // CS203a: is this a buffer, needed for prefetching and flushing
+  md_addr_t previousBaddr; // CS203a: this is the previous addr we used,
 
   /* miss/replacement handler, read/write BSIZE bytes starting at BADDR
      from/into cache block BLK, returns the latency of the operation
