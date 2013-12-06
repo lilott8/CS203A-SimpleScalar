@@ -21,13 +21,13 @@ if [ ${#} -eq 3 ]
 then
 #boolean
 STDOUT=$1
-#boolean
+#0,1,2,4,8
 PREFETCH=$2
-#int 1-8
+#int 0,2,4,8
 BUFFERS=$3
 else
 STDOUT=0
-PREFETCH=0
+PREFETCH=4
 BUFFERS=4
 fi
 
