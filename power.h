@@ -589,3 +589,7 @@ void output_data(time_result_type*, time_parameter_type*);
 void calculate_power(power_result_type*);
 int pop_count(quad_t bits);
 int pop_count_slow(quad_t bits);
+
+/*CS 203a Part2 */
+void DVFS_Controller(double DVFSTargetPower, int DVFSInterval);
+/*CS 203a Part2 end*/

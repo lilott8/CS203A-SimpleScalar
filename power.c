@@ -598,9 +598,9 @@ void update_power_stats()
     icache_power_cc3 + dcache_power_cc3 + alu_power_cc3 + 
     resultbus_power_cc3;
 
-  clock_power_cc1+=power.clock_power*(total_cycle_power_cc1/total_cycle_power);
-  clock_power_cc2+=power.clock_power*(total_cycle_power_cc2/total_cycle_power);
-  clock_power_cc3+=power.clock_power*(total_cycle_power_cc3/total_cycle_power);
+  clock_power_cc1+=(power.clock_power*(total_cycle_power_cc1/total_cycle_power));
+  clock_power_cc2+=(power.clock_power*(total_cycle_power_cc2/total_cycle_power));
+  clock_power_cc3+=(power.clock_power*(total_cycle_power_cc3/total_cycle_power));
 
   total_cycle_power_cc1 += clock_power_cc1;
   total_cycle_power_cc2 += clock_power_cc2;
@@ -2322,3 +2322,33 @@ void calculate_power(power)
   dump_power_stats(power);
 
 }
+
+/*CS 203a Part2 */
+double cc1_prev = 0;
+double cc2_prev = 0;
+double cc3_prev = 0;
+double DVFS_Avg_Power = 0;
+double DVFS_Totoal_Power = 0;
+
+void DVFS_Controller(double DVFSTargetPower, int DVFSInterval){
+ 
+  double DVFS_f_factor = FSF;
+  double DVFS_v_factor = VSF;
+  double DVFS_factor =  DVFS_f_factor * DVFS_f_factor * VSF;DVFS_v_factor;
+  double tmp_cc1 =  (total_cycle_power_cc1)*DVFS_factor;
+  double tmp_cc2 =  (total_cycle_power_cc2)*DVFS_factor;
+  double tmp_cc3 =  (total_cycle_power_cc3)*DVFS_factor;
+
+  double interval_cc1 =  0;
+  double interval_cc2 =  0;
+  double interval_cc3 =  0;
+  
+  // double interval_avg = inter 
+  
+  //Changes FSF if needed
+  double tmp_FSF = FSF+0.2;
+  #undef FSF
+  #define FSF tmp_FSF 
+    
+}
+/*CS 203a Part2 end*/

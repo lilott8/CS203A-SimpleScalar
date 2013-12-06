@@ -255,8 +255,9 @@ int data_width = 64;
 extern power_result_type power;
 
 /* CS203a Part 2 */
-double DVFS_TP; 
-int DVFS_Interval;
+static double DVFS_TP; 
+static int DVFS_Interval;
+double wall_time = 0.0;
 /* end of CS203a Part 2 */
 
 /* counters added for Wattch */
@@ -1598,13 +1599,15 @@ sim_reg_stats(struct stat_sdb_t *sdb)   /* stats database */
   //char buf[512];
   //sprintf(buf,"%","CS203A Statistics");
   stat_reg_formula(sdb,"*************************CS","Statistics","203",NULL);
-
+  stat_reg_formula(sdb,"*******Part 1*******","Part 1 Statistics","203",NULL);
   if (buffer_dl1){
     cache_reg_stats(buffer_dl1, sdb);
   }
   if (buffer_il1){
     cache_reg_stats(buffer_il1, sdb);
   }
+  stat_reg_formula(sdb,"********Part 2********","Part 2 Statistics","203",NULL);
+  stat_reg_double(sdb,"Wall Time","Elaplsed time of program",&wall_time,0,NULL);
 }
 
 /* forward declarations */
@@ -4998,6 +5001,10 @@ sim_main(void)
   fetch_pred_PC = regs.regs_PC;
   regs.regs_PC = regs.regs_PC - sizeof(md_inst_t);
 
+  /* CS 203a  part 2 */
+  int DVFS_Cycle_Counter = 0; //used to work with DVFS_Interval
+  /* CS 203a  part 2 end */
+
   /* main simulator loop, NOTE: the pipe stages are traverse in reverse order
      to eliminate this/next state synchronization and relaxation problems */
   for (;;)
@@ -5065,7 +5072,18 @@ sim_main(void)
 
     /* Added by Wattch to update per-cycle power statistics */
     update_power_stats();
-
+    /* CS203a part b */
+    DVFS_Cycle_Counter++; //used to work with DVFS_Interval
+    if(DVFS_Cycle_Counter == DVFS_Interval){
+      //DVFS_Controller();
+      DVFS_Cycle_Counter = 0;
+    }
+    //Calculate Wall/elapsed time
+    double DVFS_FSF = FSF;
+    double base_f = Mhz;
+    wall_time += (1.0/(DVFS_FSF*base_f))*1000000;
+    /* CS203a part b end */
+    
     /* update buffer occupancy stats */
     IFQ_count += fetch_num;
     IFQ_fcount += ((fetch_num == ruu_ifq_size) ? 1 : 0);
