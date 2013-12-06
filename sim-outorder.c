@@ -1410,6 +1410,7 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
         buffer_il1 = cache_create("buffer_il1", buffer_il1_numsets, 32, /* balloc */FALSE,
             /* usize */0, 1, cache_char2policy('f'),
             il1_buffer_access_fn, /* hit lat */buffer_il1_lat);
+            buffer_il1->isBuffer = 1; // this is a buffer, so we set it to 1/true
       }
     } else {
       buffer_il1 = NULL;
@@ -1431,6 +1432,7 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
         buffer_dl1 = cache_create("buffer_dl1", buffer_dl1_numsets, 32, /* balloc */FALSE,
             /* usize */0, 1, cache_char2policy('f'),
             dl1_buffer_access_fn, /* hit lat */buffer_dl1_lat);
+            buffer_dl1->isBuffer = 1; // this is a buffer, so we set it to 1/true
       }
     } else {
       buffer_dl1 = NULL;

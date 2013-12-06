@@ -157,6 +157,7 @@ struct cache_t
   enum cache_policy policy;	/* cache replacement policy */
   unsigned int hit_latency;	/* cache hit latency */
   int prefetch;		// CS203a: prefetch size
+  unsigned char isBuffer; // CS203a: is this a buffer, needed for prefetching and flushing
 
   /* miss/replacement handler, read/write BSIZE bytes starting at BADDR
      from/into cache block BLK, returns the latency of the operation

@@ -310,6 +310,8 @@ cache_create(char *name,		/* name of the cache */
   cp->assoc = assoc;
   cp->policy = policy;
   cp->hit_latency = hit_latency;
+  /* CS203a setting the cache->isBuffer flag */
+  cp->isBuffer = 0;
 
   /* miss/replacement functions */
   cp->blk_access_fn = blk_access_fn;
