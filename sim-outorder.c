@@ -5030,10 +5030,10 @@ sim_main(void)
 
   /* CS 203a  part 2 */
   int DVFS_Cycle_Counter = 0; //used to work with DVFS_Interval
-  //DVFS_TP = DVFSTargetPower;
-  //DVFS_Interval = DVFSInterval;
-  DVFS_TP = 12.542;
-  DVFS_Interval = 1234;
+  DVFS_TP = DVFSTargetPower;
+  DVFS_Interval = DVFSInterval;
+  //DVFS_TP = 17.8353;
+  //DVFS_Interval = 10000;
   /* CS 203a  part 2 end */
 
   /* main simulator loop, NOTE: the pipe stages are traverse in reverse order
@@ -5105,12 +5105,11 @@ sim_main(void)
     update_power_stats();
     /* CS203a part b */
     DVFS_Cycle_Counter = (DVFS_Cycle_Counter+1) % DVFSInterval; //used to work with DVFS_Interval
+        
     if((DVFS_Cycle_Counter == 0)){
       DVFS_Controller(DVFSTargetPower,DVFSInterval);
-      DVFS_Cycle_Counter = 0;
     }
-    //DVFS_Controller(DVFSTargetPower,DVFSInterval);
-    
+        
     //Calculate Wall/elapsed time
     double base_f = Mhz;
     wall_time += (1.0/(get_DVFS_FSF()*base_f))*1000000;

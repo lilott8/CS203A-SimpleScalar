@@ -199,7 +199,7 @@ static double total_cycle_power_cc2;
 static double total_cycle_power_cc3;
 
 /*CS 203a Part2*/
-static double DVSF_delta = 0.2;
+static double DVFS_delta = 0.2;
 double FSF = 1.0;
 double VSF = 1.0;
 int current_interval = 0;
@@ -617,7 +617,7 @@ void update_power_stats()
   total_cycle_power_cc1 += clock_power_cc1;
   total_cycle_power_cc2 += clock_power_cc2;
   total_cycle_power_cc3 += clock_power_cc3;
-
+  
   current_total_cycle_power_cc1 = total_cycle_power_cc1
     -last_single_total_cycle_power_cc1;
   current_total_cycle_power_cc2 = total_cycle_power_cc2
@@ -625,6 +625,17 @@ void update_power_stats()
   current_total_cycle_power_cc3 = total_cycle_power_cc3
     -last_single_total_cycle_power_cc3;
 
+  /* CS203a Part2 */
+  double delta = FSF*VSF*VSF;
+  current_total_cycle_power_cc1 *= delta;
+  current_total_cycle_power_cc2 *= delta;
+  current_total_cycle_power_cc3 *= delta;
+  
+  DVFS_power_cc1 += current_total_cycle_power_cc1;
+  DVFS_power_cc2 += current_total_cycle_power_cc2;
+  DVFS_power_cc3 += current_total_cycle_power_cc3;
+  /* CS203a Part2 end*/
+  
   max_cycle_power_cc1 = MAX(max_cycle_power_cc1,current_total_cycle_power_cc1);
   max_cycle_power_cc2 = MAX(max_cycle_power_cc2,current_total_cycle_power_cc2);
   max_cycle_power_cc3 = MAX(max_cycle_power_cc3,current_total_cycle_power_cc3);
@@ -2336,50 +2347,57 @@ void calculate_power(power)
 }
 
 /*CS 203a Part2 */
-double cc1_prev = 0;
-double cc2_prev = 0;
-double cc3_prev = 0;
-double DVFS_Avg_Power = 0;
-double DVFS_Totoal_Power = 0;
+//double cc1_prev = 0;
+//double cc2_prev = 0;
+//double cc3_prev = 0;
+//double DVFS_Avg_Power = 0;
+//double DVFS_Totoal_Power = 0;
 
 
 void DVFS_Controller(double DVFSTargetPower, int DVFSInterval){
-  /*
-  double DVFS_f_factor = FSF;
-  double DVFS_v_factor = VSF;
-  double DVFS_factor =  DVFS_f_factor * DVFS_f_factor * DVFS_v_factor;
-  double tmp_cc1 =  (total_cycle_power_cc1)*DVFS_factor;
-  double tmp_cc2 =  (total_cycle_power_cc2)*DVFS_factor;
-  double tmp_cc3 =  (total_cycle_power_cc3)*DVFS_factor;
-
-  double interval_cc1 =  tmp_cc1-cc1_prev;
-  double interval_cc2 =  tmp_cc2-cc2_prev;
-  double interval_cc3 =  tmp_cc3-cc3_prev;
-  
-  double total_interval_power = interval_cc1 + interval_cc2 + interval_cc3;
-  double avg_interval_power = total_interval_power / DVFSInterval;
-  
-  //Changes FSF if needed
-  double tmp_FSF = 0.0;
-  double tmp_VSF = 0.0;
-  if(avg_interval_power < DVFSTargetPower)
-  #undef FSF
-  #define FSF tmp_FSF 
-  #undef VSF
-  #define FSF tmp_VSF
-  */
-  double avg_interval_power = 0.0;
+ 
+  double avg_interval_power = 0.0;  
   FILE *file;
    if(current_interval == 0){
     file = fopen("./CS203a_Part2_DVFS.csv","wb");
-    fprintf(file,"Interval,VSF,FSF,avg_power\n");
-    fprintf(file,"%d,%f,%f,%f\n",current_interval,VSF,FSF,avg_interval_power);
+    fprintf(file,"Interval,VSF,FSF,avg_power,DVFSInterval,DVFSTargetPower\n");
+    fprintf(file,"%d,%f,%f,%f,%d,%f\n",current_interval,VSF,FSF,avg_interval_power,DVFSInterval,DVFSTargetPower);
     //fprintf(file,"%d,%f,%f,%f\n",DVFSInterval,VSF,FSF,avg_interval_power);
     fclose(file);
    }
   current_interval++;
+  //Calculate avg power
+  double interval_power = DVFS_power_cc1 + DVFS_power_cc2 + DVFS_power_cc3;
+  avg_interval_power = interval_power/(DVFSInterval*1.0);
+  
+  //Calculate VSF and FSF
+  if(avg_interval_power < DVFSTargetPower){
+    FSF += DVFS_delta;
+    VSF += DVFS_delta;
+    ///*
+    if(FSF > 2.0){
+      FSF = 2.0;
+    }
+    if(VSF > 2.0){
+      VSF = 2.0;
+    }
+    //*/
+  }
+  else if(avg_interval_power > DVFSTargetPower){
+    FSF -= DVFS_delta;
+    VSF -= DVFS_delta;
+    ///*
+    if(FSF < 0.2){
+      FSF = 0.2;
+    }
+    if(VSF < 0.2){
+      VSF = 0.2;
+    }
+    //*/
+  } 
+
   file = fopen("./CS203a_Part2_DVFS.csv","ab");
-  fprintf(file,"%d,%f,%f,%f\n",current_interval,VSF,FSF,avg_interval_power);
+  fprintf(file,"%d,%f,%f,%f,%d,%f\n",current_interval,VSF,FSF,avg_interval_power,DVFSInterval,DVFSTargetPower);
   fclose(file);
 }
 double get_DVFS_FSF(){
