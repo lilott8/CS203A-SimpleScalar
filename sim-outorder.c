@@ -526,8 +526,11 @@ dl1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
     }
     else //flush stream buffer and refill buffer
     {
+      // wipe our cache
       cache_flush(buffer_dl1, now);
+      // request a new block
       lat = cache_access(buffer_dl1, cmd, baddr, NULL, bsize, now, NULL, NULL);
+      // we are not accessing the buffer for a block
       buffer_dl1->misses--;
     }
     buffer_dl1->previousBaddr = baddr;
