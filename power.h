@@ -274,13 +274,7 @@
 #define Vt		(1.09 * VTSCALE)
 #define Vbitsense	(0.10 * SSCALE)
 
-//#define Powerfactor (Mhz)*Vdd*Vdd
-/* CS 203a Partb */
-#define FSF 1.0;
-#define VSF 1.0;
-#define Powerfactor FSF*(Mhz)*VSF*VSF*Vdd*Vdd
-/* end of CS 203a Partb */
-
+#define Powerfactor (Mhz)*Vdd*Vdd
 
 #define SensePowerfactor3 (Mhz)*(Vbitsense)*(Vbitsense)
 #define SensePowerfactor2 (Mhz)*(Vbitpre-Vbitsense)*(Vbitpre-Vbitsense)
@@ -592,4 +586,5 @@ int pop_count_slow(quad_t bits);
 
 /*CS 203a Part2 */
 void DVFS_Controller(double DVFSTargetPower, int DVFSInterval);
+double get_DVFS_FSF();
 /*CS 203a Part2 end*/

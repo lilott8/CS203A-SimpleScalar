@@ -255,9 +255,13 @@ int data_width = 64;
 extern power_result_type power;
 
 /* CS203a Part 2 */
-static double DVFS_TP; 
-static int DVFS_Interval;
+static double DVFSTargetPower;
+double DVFS_TP =0.0;
+static int DVFSInterval;
+int DVFS_Interval = 0;
 double wall_time = 0.0;
+double DVFS_total_power = 0.0;
+double DVFS_total_energy = 0.0;
 /* end of CS203a Part 2 */
 
 /* counters added for Wattch */
@@ -756,7 +760,6 @@ dtlb_access_fn(enum mem_cmd cmd,	/* access cmd, Read or Write */
   return tlb_miss_lat;
 }
 
-
 /* register simulator-specific options */
   void
 sim_reg_options(struct opt_odb_t *odb)
@@ -767,7 +770,7 @@ sim_reg_options(struct opt_odb_t *odb)
       "execution support.  This simulator is a performance simulator, tracking the\n"
       "latency of all pipeline operations.\n"
       );
-
+ 
   /* instruction limit */
 
   opt_reg_uint(odb, "-max:inst", "maximum number of inst's to execute",
@@ -1060,8 +1063,10 @@ sim_reg_options(struct opt_odb_t *odb)
   opt_reg_flag(odb, "-bugcompat",
       "operate in backward-compatible bugs mode (for testing only)",
       &bugcompat_mode, /* default */FALSE, /* print */TRUE, NULL);
+  
 
   //CS203a begin part2
+  ///*
   opt_reg_note(odb,
       "\DVFS Controller\n"
       "\n"
@@ -1072,11 +1077,18 @@ sim_reg_options(struct opt_odb_t *odb)
       "                  controller will try to achieve at each interval.\n"
       "                  Default value will turn off the DVFS Controller"
       );
-  opt_reg_double(odb,"-DVFSTargetPower","Target Power",&DVFS_TP,/* default */-1.0,
-		 /* print */TRUE, /* format */NULL);
-  opt_reg_int(odb,"-DVFSInterval","Target Power",&DVFS_Interval,/* default */100000,
-		 /* print */TRUE, /* format */NULL);
-  //CS203a end part2
+  //*/
+  opt_reg_double(odb, "-DVFSTargetPower",
+  	      "target power usage",
+  	      &DVFSTargetPower, /* default */-1.0,
+  	      /* print */TRUE, /* format */NULL);
+  
+  opt_reg_int(odb, "-DVFSInterval",
+  	      "Number cycles between checks",
+  	      &DVFSInterval, /* default */100000,
+  	      /* print */TRUE, /* format */NULL);
+  
+//CS203a end part2
 }
 
 /* check simulator-specific option values */
@@ -1423,6 +1435,9 @@ sim_aux_config(FILE *stream)            /* output stream */
   /* nada */
 }
 
+/* CS203a */
+/* CS203a end*/
+
 /* register simulator-specific statistics */
   void
 sim_reg_stats(struct stat_sdb_t *sdb)   /* stats database */
@@ -1607,7 +1622,19 @@ sim_reg_stats(struct stat_sdb_t *sdb)   /* stats database */
     cache_reg_stats(buffer_il1, sdb);
   }
   stat_reg_formula(sdb,"********Part 2********","Part 2 Statistics","203",NULL);
-  stat_reg_double(sdb,"Wall Time","Elaplsed time of program",&wall_time,0,NULL);
+  stat_reg_double(sdb,"wall_time","Total run-time of program in Seconds",
+		  &wall_time,0,NULL);
+  
+  stat_reg_double(sdb,"DVFSTargetPower","DVFS Target Power",
+  		  &DVFS_TP,0,NULL);
+  stat_reg_int(sdb,"DVFS_Interval","DVFS Interval",
+  		  &DVFS_Interval,0,NULL);
+  double DVFS_total_power = 0.0;
+  stat_reg_double(sdb,"DVFS_total_power","DVFS Total Power",
+		  &DVFS_total_power,0,NULL);
+  double DVFS_avg_power = 0.0;
+  stat_reg_double(sdb,"DVFS_avg_power","DVFS Average Power",
+		&DVFS_avg_power,0,NULL);
 }
 
 /* forward declarations */
@@ -5003,6 +5030,10 @@ sim_main(void)
 
   /* CS 203a  part 2 */
   int DVFS_Cycle_Counter = 0; //used to work with DVFS_Interval
+  //DVFS_TP = DVFSTargetPower;
+  //DVFS_Interval = DVFSInterval;
+  DVFS_TP = 12.542;
+  DVFS_Interval = 1234;
   /* CS 203a  part 2 end */
 
   /* main simulator loop, NOTE: the pipe stages are traverse in reverse order
@@ -5073,15 +5104,17 @@ sim_main(void)
     /* Added by Wattch to update per-cycle power statistics */
     update_power_stats();
     /* CS203a part b */
-    DVFS_Cycle_Counter++; //used to work with DVFS_Interval
-    if(DVFS_Cycle_Counter == DVFS_Interval){
-      //DVFS_Controller();
+    DVFS_Cycle_Counter = (DVFS_Cycle_Counter+1) % DVFSInterval; //used to work with DVFS_Interval
+    if((DVFS_Cycle_Counter == 0)){
+      DVFS_Controller(DVFSTargetPower,DVFSInterval);
       DVFS_Cycle_Counter = 0;
     }
+    //DVFS_Controller(DVFSTargetPower,DVFSInterval);
+    
     //Calculate Wall/elapsed time
-    double DVFS_FSF = FSF;
     double base_f = Mhz;
-    wall_time += (1.0/(DVFS_FSF*base_f))*1000000;
+    wall_time += (1.0/(get_DVFS_FSF()*base_f))*1000000;
+    
     /* CS203a part b end */
     
     /* update buffer occupancy stats */

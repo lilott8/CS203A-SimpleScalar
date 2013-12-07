@@ -198,6 +198,18 @@ static double total_cycle_power_cc1;
 static double total_cycle_power_cc2;
 static double total_cycle_power_cc3;
 
+/*CS 203a Part2*/
+static double DVSF_delta = 0.2;
+double FSF = 1.0;
+double VSF = 1.0;
+int current_interval = 0;
+
+static DVFS_power_cc1 = 0;
+static DVFS_power_cc2 = 0;
+static DVFS_power_cc3 = 0;
+
+/*CS 203a Part2 end*/
+
 static double last_single_total_cycle_power_cc1 = 0.0;
 static double last_single_total_cycle_power_cc2 = 0.0;
 static double last_single_total_cycle_power_cc3 = 0.0;
@@ -2330,25 +2342,47 @@ double cc3_prev = 0;
 double DVFS_Avg_Power = 0;
 double DVFS_Totoal_Power = 0;
 
+
 void DVFS_Controller(double DVFSTargetPower, int DVFSInterval){
- 
+  /*
   double DVFS_f_factor = FSF;
   double DVFS_v_factor = VSF;
-  double DVFS_factor =  DVFS_f_factor * DVFS_f_factor * VSF;DVFS_v_factor;
+  double DVFS_factor =  DVFS_f_factor * DVFS_f_factor * DVFS_v_factor;
   double tmp_cc1 =  (total_cycle_power_cc1)*DVFS_factor;
   double tmp_cc2 =  (total_cycle_power_cc2)*DVFS_factor;
   double tmp_cc3 =  (total_cycle_power_cc3)*DVFS_factor;
 
-  double interval_cc1 =  0;
-  double interval_cc2 =  0;
-  double interval_cc3 =  0;
+  double interval_cc1 =  tmp_cc1-cc1_prev;
+  double interval_cc2 =  tmp_cc2-cc2_prev;
+  double interval_cc3 =  tmp_cc3-cc3_prev;
   
-  // double interval_avg = inter 
+  double total_interval_power = interval_cc1 + interval_cc2 + interval_cc3;
+  double avg_interval_power = total_interval_power / DVFSInterval;
   
   //Changes FSF if needed
-  double tmp_FSF = FSF+0.2;
+  double tmp_FSF = 0.0;
+  double tmp_VSF = 0.0;
+  if(avg_interval_power < DVFSTargetPower)
   #undef FSF
   #define FSF tmp_FSF 
-    
+  #undef VSF
+  #define FSF tmp_VSF
+  */
+  double avg_interval_power = 0.0;
+  FILE *file;
+   if(current_interval == 0){
+    file = fopen("./CS203a_Part2_DVFS.csv","wb");
+    fprintf(file,"Interval,VSF,FSF,avg_power\n");
+    fprintf(file,"%d,%f,%f,%f\n",current_interval,VSF,FSF,avg_interval_power);
+    //fprintf(file,"%d,%f,%f,%f\n",DVFSInterval,VSF,FSF,avg_interval_power);
+    fclose(file);
+   }
+  current_interval++;
+  file = fopen("./CS203a_Part2_DVFS.csv","ab");
+  fprintf(file,"%d,%f,%f,%f\n",current_interval,VSF,FSF,avg_interval_power);
+  fclose(file);
+}
+double get_DVFS_FSF(){
+  return FSF;
 }
 /*CS 203a Part2 end*/
