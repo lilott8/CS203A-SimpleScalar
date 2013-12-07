@@ -311,7 +311,8 @@ cache_create(char *name,		/* name of the cache */
   cp->policy = policy;
   cp->hit_latency = hit_latency;
   /* CS203a setting the cache->isBuffer flag */
-  cp->isBuffer = 0;
+  cp->isBuffer = 0; // CS203a
+  cp->prefetch = 0; // CS203a
 
   /* miss/replacement functions */
   cp->blk_access_fn = blk_access_fn;
@@ -659,7 +660,7 @@ cache_access(struct cache_t *cp,	/* cache to access */
   if(cp->isBuffer) {  // if buffer, fill buffer with associative entries
     fetchSize = cp->assoc;
   } 
-  else if (cp->prefetch > 0)  { // if prefetch, fetch that many blocks from main mem
+  else if (cp->prefetch)  { // if prefetch, fetch that many blocks from main mem
     fetchSize = cp->prefetch;
   } else {
     fetchSize = 0;
@@ -784,13 +785,11 @@ cache_access(struct cache_t *cp,	/* cache to access */
     if (cp->hsize)
       link_htab_ent(cp, &cp->sets[set], repl);
   } // for loop fetchsize
-
   /****************************************
    * End CS203a
    ****************************************/
   /* return latency of the operation */
   return lat;
-
 
 cache_hit: /* slow hit handler */
 

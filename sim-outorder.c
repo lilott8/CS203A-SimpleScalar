@@ -184,7 +184,7 @@ static char *cache_il2_opt;
 /* l2 instruction cache hit latency (in cycles) */
 static int cache_il2_lat;
 
-/******** CS203A buffer ********/
+/******** CS203a buffer ********/
 /* il_buffer config */
 static char *buffer_il1_opt;
 
@@ -212,7 +212,7 @@ static int buffer_il1_numsets = 4;
 /** This is effectively our valid bit for our stream buffers */
 md_addr_t previous_data_baddr = 0;
 md_addr_t previous_inst_baddr = 0;
-/******* End CS203A ***********/
+/******* End CS203a ***********/
 
 /* flush caches on system calls */
 static int flush_on_syscalls;
@@ -290,11 +290,11 @@ counter_t resultbus_total_pop_count_cycle=0;
 counter_t resultbus_num_pop_count_cycle=0;
 
 /**
- * CS203A Adding counters for our accesses
+ * CS203a Adding counters for our accesses
  */
 counter_t dcache_buffer_access=0;
 counter_t icache_buffer_access=0;
-/** End CS203A **/
+/** End CS203a **/
 
 /* text-based stat profiles */
 #define MAX_PCSTAT_VARS 8
@@ -516,8 +516,8 @@ dl1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
 {
   unsigned int lat;
 
-  /*---------------------------------------cs203a begin--------------------------------------*/
-  if (buffer_dl1)
+  /*---------------------------------------CS203a begin--------------------------------------*/
+  if (buffer_dl1 && cmd != Write)
   {
     if (CACHE_BADDR(buffer_dl1, baddr) == CACHE_BADDR(buffer_dl1, buffer_dl1->previousBaddr+buffer_dl1->bsize)) //sequential miss
     {
@@ -527,7 +527,6 @@ dl1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
     else //flush stream buffer and refill buffer
     {
       cache_flush(buffer_dl1, now);
-
       lat = cache_access(buffer_dl1, cmd, baddr, NULL, bsize, now, NULL, NULL);
       buffer_dl1->misses--;
     }
@@ -540,7 +539,6 @@ dl1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
       return 0;
     }
   }
-
   else if (cache_il2)
   {
     /* access next level of data cache hierarchy */
@@ -571,7 +569,7 @@ dl1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
   }
 }
 /*************************************************************
- * End CS203A
+ * End CS203a
  **************************************************************/
 
 
@@ -605,12 +603,14 @@ il1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
     tick_t now)		/* time of access */
 {
   unsigned int lat;
-
-  if (buffer_il1)
+  /************************
+  * CS203a
+  ************************/
+  if (buffer_il1 && cmd != Write)
   {
     if(CACHE_BADDR(buffer_il1, baddr) == CACHE_BADDR(buffer_il1, buffer_il1->previousBaddr + buffer_il1->bsize)) {
       /**
-       * CS203A interjected our buffer between L1 and L2
+       * CS203a interjected our buffer between L1 and L2
        */
       /* access next level of inst cache hierarchy */
       lat = cache_access(buffer_il1, cmd, baddr, NULL, bsize,
@@ -652,8 +652,6 @@ il1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
     else
       panic("writes to instruction memory not supported");
   }
-
-
 }
 /**
  * CS203a 
@@ -675,14 +673,6 @@ dl1_buffer_access_fn(enum mem_cmd cmd,   /* access cmd, Read or Write */
     /* access next level of data cache hierarchy */
     lat = cache_access(cache_dl2, cmd, baddr, NULL, bsize,
         /* now */now, /* pudata */NULL, /* repl addr */NULL);
-    // Grab the next n lines from L2 cache
-    int x;
-    for(x=0;x<=buffer_dl1_numsets;x++) {
-      //printf("Accessing the cache: " + x);
-      baddr += buffer_dl1->bsize;
-      lat+= cache_access(cache_il2, cmd, baddr, NULL, bsize,
-          /*now*/ now, /*pudata*/NULL, /* repl addr */NULL);
-    }
     /* Wattch -- Dcache2 access */
     dcache2_access++;
 
@@ -709,7 +699,7 @@ dl1_buffer_access_fn(enum mem_cmd cmd,   /* access cmd, Read or Write */
   }
 }
 /**************************************************
- * End CS203A
+ * End CS203a
  ***************************************************/
 
 
@@ -733,14 +723,6 @@ il1_buffer_access_fn(enum mem_cmd cmd,   /* access cmd, Read or Write */
     /* access next level of inst cache hierarchy */
     lat = cache_access(cache_il2, cmd, baddr, NULL, bsize,
         /* now */now, /* pudata */NULL, /* repl addr */NULL);
-
-    // This pulls subsequent lines into our buffer, until our buffer is filled
-    int x;
-    for(x=1;x<=buffer_il1_numsets;x++) {
-      baddr += buffer_il1->bsize;
-      lat+= cache_access(cache_il2, cmd, baddr, NULL, bsize,
-          /*now*/ now, /*pudata*/NULL, /* repl addr */NULL);
-    }
     /* Wattch -- Dcache2 access */
     dcache2_access++;
 
@@ -759,7 +741,7 @@ il1_buffer_access_fn(enum mem_cmd cmd,   /* access cmd, Read or Write */
   }
 }
 /***************************************************
- *  End CS203A
+ *  End CS203a
  ****************************************************/
 
 
@@ -1057,7 +1039,7 @@ sim_reg_options(struct opt_odb_t *odb)
       /* print */TRUE, NULL);
 
   /****************************************
-   * CS203A
+   * CS203a
    *****************************************/
   opt_reg_string(odb, "-cache:buffer_il",
       "-cache:buffer_il <size>",
@@ -1070,7 +1052,7 @@ sim_reg_options(struct opt_odb_t *odb)
       FALSE, NULL);
 
   /****************************************
-   * END CS203A
+   * END CS203a
    *****************************************/
   opt_reg_int(odb, "-cache:il2lat",
       "l2 instruction cache hit latency (in cycles)",
@@ -1292,12 +1274,12 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
         dl1_access_fn, /* hit lat */cache_dl1_lat);
 
     /*******************************
-     * CS203A
+     * CS203a
      ********************************/
     /* is the level 2 D-cache defined? */
     if (!mystricmp(cache_dl2_opt, "none"))
       cache_dl2 = NULL;
-    else if (!mystricmp(cache_dl2_opt, "dl2")) {
+    else if (!mystricmp(cache_il2_opt, "dl2")) {
       int prefetch;
       if(sscanf(cache_dl2_opt, "%[^:]:%d:%d:%d:%c:%d",
             name, &nsets, &bsize, &assoc, &c, &prefetch) != 6) {
@@ -1324,7 +1306,7 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
     }
   }
   /*******************************
-   * END CS203A
+   * END CS203a
    ********************************/
 
   /* use a level 1 I-cache? */
@@ -1388,7 +1370,9 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
 
       if(bil1_size !=0 && bil1_size != 2 && bil1_size != 4 && bil1_size != 8) {
         fatal("Stream buffer is not the correct size: 0, 2, 4, 8");
+        // DEBUGGER
       }
+
       if(bil1_size == 0) {
         buffer_il1 = NULL;
       } else {
@@ -1407,8 +1391,9 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
         fatal("Bad D-stream buffer params: <size>");
       }
 
-      if(bdl1_size !=1 && bdl1_size != 2 && bdl1_size != 4 && bdl1_size != 8) {
+      if(bdl1_size !=0 && bdl1_size != 2 && bdl1_size != 4 && bdl1_size != 8) {
         fatal("Stream buffer is not the correct size: 0, 2, 4, 8");
+        // DEBUGGER
       }
 
       if(bdl1_size == 0) {
@@ -1704,12 +1689,12 @@ sim_reg_stats(struct stat_sdb_t *sdb)   /* stats database */
   ld_reg_stats(sdb);
   mem_reg_stats(mem, sdb);
   /*
-     CS203A Project Phase 2 Statistics 
+     CS203a Project Phase 2 Statistics 
      */
-  //printf("%s\n","CS203A Project Phase 2 Statistics");
-  //fprintf(sdb,"%s\n","CS203A Project Phase 2 Statistics");
+  //printf("%s\n","CS203a Project Phase 2 Statistics");
+  //fprintf(sdb,"%s\n","CS203a Project Phase 2 Statistics");
   //char buf[512];
-  //sprintf(buf,"%","CS203A Statistics");
+  //sprintf(buf,"%","CS203a Statistics");
   stat_reg_formula(sdb,"*************************CS","Statistics","203",NULL);
 
   if (buffer_dl1){
@@ -1721,6 +1706,17 @@ sim_reg_stats(struct stat_sdb_t *sdb)   /* stats database */
   stat_reg_formula(sdb, "sim_CPI",
       "cycles per instruction",
       "sim_cycle / sim_num_insn", /* format */NULL);
+  // DEBUGGER
+  if (cache_il1
+      && (cache_il1 != cache_dl1 && cache_il1 != cache_dl2))
+    cache_reg_stats(cache_il1, sdb);
+  if (cache_il2
+      && (cache_il2 != cache_dl1 && cache_il2 != cache_dl2))
+    cache_reg_stats(cache_il2, sdb);
+  if (cache_dl1)
+    cache_reg_stats(cache_dl1, sdb);
+  if (cache_dl2)
+    cache_reg_stats(cache_dl2, sdb);
 }
 
 /* forward declarations */

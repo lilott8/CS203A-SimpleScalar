@@ -5,7 +5,7 @@ rm -f *.o
 make
 make config-alpha
 make sim-outorder
-FILES=('./benchmarks/anagram.alpha words < ./benchmarks/anagram.in' './benchmarks/go.alpha 2 8 ./benchmarks/2stone9.in')
+FILES=('./benchmarks/anagram.alpha ./benchmarks/words < ./benchmarks/anagram.in' './benchmarks/go.alpha 2 8 ./benchmarks/2stone9.in')
 CACHE_BSIZE=('32' '64' '128' '256')
 CACHE_REPLACE=('l')
 #Should be ...8 512
@@ -27,13 +27,9 @@ PREFETCH=$2
 BUFFERS=$3
 else
 STDOUT=0
-PREFETCH=4
-BUFFERS=4
+PREFETCH=8
+BUFFERS=0
 fi
-
-echo $STDOUT
-echo $PREFETCH
-echo $BUFFERS
 
 for var in "${FILES[@]}"
 do
@@ -41,11 +37,12 @@ do
   P1="$P1 -cache:il2 dl2 -cache:dl2 ul2:${ASSOC_SETS[$I]}:32:${ASSOC[$I]}:l:$PREFETCH "
   P1="$P1 -cache:dl1 dl1:$L1 -cache:il1 il1:$L1 -redir:sim ${COMPILERS[$I]}.stat $var "
   
-  if [ ${STDOUT} = 1 ]
-  then
-    1=1
+  #if [ ${STDOUT} = 1 ]
+  #then
+  #  1=1
     #P1="$P1 > STDOUT-${COMPILERS[$I]}-OUTFILE.std 2> ${COMPILERS[$I]}.stat"
-  fi
+  #fi
   echo $P1
+  break
   I=$((I+1))
 done
