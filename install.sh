@@ -15,33 +15,53 @@ ASSOC_SETS=('64' '1')
 L1='64:32:2:l'
 
 COMPILERS=('anagram' 'go')
-I=0
 
-if [ ${#} -eq 3 ]
-then
+I=0
+X=0
+Y=0
+
+PREFETCH=('0' '1' '2' '4')
+BUFFERS=('0' '2' '4' '8')
+
+#if [ ${#} -eq 3 ]
+#then
 #boolean
-STDOUT=$1
+#STDOUT=$1
 #0,1,2,4,8
-PREFETCH=$2
+#PREFETCH=$2
 #int 0,2,4,8
-BUFFERS=$3
-else
-STDOUT=0
-PREFETCH=8
-BUFFERS=0
-fi
+#BUFFERS=$3
+#else
+#STDOUT=0
+#PREFETCH=8
+#BUFFERS=0
+#fi
 
 for var in "${FILES[@]}"
 do
-  P1="./sim-outorder -cache:buffer_il $BUFFERS -cache:buffer_dl $BUFFERS "
-  P1="$P1 -cache:il2 dl2 -cache:dl2 ul2:${ASSOC_SETS[$I]}:32:${ASSOC[$I]}:l:$PREFETCH "
-  P1="$P1 -cache:dl1 dl1:$L1 -cache:il1 il1:$L1 -redir:sim ${COMPILERS[$I]}.stat $var "
+  X=0
+  Y=0
+  for pre in "${PREFETCH[@]}"
+  do
+    #Increment the prefetching
+    P1="./sim-outorder -cache:buffer_il 0 -cache:buffer_dl 0 "
+    P1="$P1 -cache:il2 dl2 -cache:dl2 ul2:${ASSOC_SETS[$I]}:32:${ASSOC[$I]}:l:$pre "
+    P1="$P1 -cache:dl1 dl1:$L1 -cache:il1 il1:$L1 -redir:sim "
+    P1="$P1 ./results/prefetch/${COMPILERS[$I]}-${PREFETCH[$X]}.stat $var "
+    X=$((X+1))
+    echo $P1
+  done
+  echo "=============================================="
+  for buf in "${BUFFERS[@]}"
+  do
+    #increment the buffers
+    P2="./sim-outorder -cache:buffer_il $buf -cache:buffer_dl $buf "
+    P2="$P2 -cache:il2 dl2 -cache:dl2 ul2:${ASSOC_SETS[$I]}:32:${ASSOC[$I]}:l "
+    P2="$P2 -cache:dl1 dl1:$L1 -cache:il1 il1:$L1 -redir:sim "
+    P2="$P2 ./results/buffers/${COMPILERS[$I]}-${BUFFERS[$Y]}.stat $var "
+    Y=$((Y+1))
+    echo $P2
+  done
   
-  #if [ ${STDOUT} = 1 ]
-  #then
-  #  1=1
-    #P1="$P1 > STDOUT-${COMPILERS[$I]}-OUTFILE.std 2> ${COMPILERS[$I]}.stat"
-  #fi
-  echo $P1
   I=$((I+1))
 done
