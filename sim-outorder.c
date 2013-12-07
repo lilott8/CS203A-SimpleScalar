@@ -186,28 +186,28 @@ static int cache_il2_lat;
 
 /******** CS203a buffer ********/
 /* il_buffer config */
-static char *buffer_il1_opt;
+static char *isbuffer_opt;
 
 /* dl_buffer config */
-static char *buffer_dl1_opt;
+static char *dsbuffer_opt;
 
 /* latency for our dl_buffer */
-static int buffer_dl1_lat;
+static int dsbuffer_lat;
 
 /* latency for our il_buffer */
-static int buffer_il1_lat;
+static int isbuffer_lat;
 
 /* our il buffer */
-struct cache_t *buffer_il1;
+struct cache_t *isbuffer;
 
 /* our dl buffer */
-struct cache_t *buffer_dl1;
+struct cache_t *dsbuffer;
 
 /* our dl buffer numset variable */
-static int buffer_dl1_numsets = 4;
+static int dsbuffer_numsets = 4;
 
 /* our il buffer numset variable */
-static int buffer_il1_numsets = 4;
+static int isbuffer_numsets = 4;
 
 /** This is effectively our valid bit for our stream buffers */
 md_addr_t previous_data_baddr = 0;
@@ -517,23 +517,23 @@ dl1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
   unsigned int lat;
 
   /*---------------------------------------CS203a begin--------------------------------------*/
-  if (buffer_dl1 && cmd != Write)
+  if (dsbuffer && cmd != Write)
   {
-    if (CACHE_BADDR(buffer_dl1, baddr) == CACHE_BADDR(buffer_dl1, buffer_dl1->previousBaddr+buffer_dl1->bsize)) //sequential miss
+    if (CACHE_BADDR(dsbuffer, baddr) == CACHE_BADDR(dsbuffer, dsbuffer->previousBaddr+dsbuffer->bsize)) //sequential miss
     {
-      lat = cache_access(buffer_dl1, cmd, baddr, NULL, bsize,
+      lat = cache_access(dsbuffer, cmd, baddr, NULL, bsize,
           /* now */now, /* pudata */NULL, /* repl addr */NULL);
     }
     else //flush stream buffer and refill buffer
     {
       // wipe our cache
-      cache_flush(buffer_dl1, now);
+      cache_flush(dsbuffer, now);
       // request a new block
-      lat = cache_access(buffer_dl1, cmd, baddr, NULL, bsize, now, NULL, NULL);
+      lat = cache_access(dsbuffer, cmd, baddr, NULL, bsize, now, NULL, NULL);
       // we are not accessing the buffer for a block
-      buffer_dl1->misses--;
+      dsbuffer->misses--;
     }
-    buffer_dl1->previousBaddr = baddr;
+    dsbuffer->previousBaddr = baddr;
     //block not in stream buffer
     if(cmd == Read) {
       return lat;
@@ -609,23 +609,23 @@ il1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
   /************************
   * CS203a
   ************************/
-  if (buffer_il1 && cmd != Write)
+  if (isbuffer && cmd != Write)
   {
-    if(CACHE_BADDR(buffer_il1, baddr) == CACHE_BADDR(buffer_il1, buffer_il1->previousBaddr + buffer_il1->bsize)) {
+    if(CACHE_BADDR(isbuffer, baddr) == CACHE_BADDR(isbuffer, isbuffer->previousBaddr + isbuffer->bsize)) {
       /**
        * CS203a interjected our buffer between L1 and L2
        */
       /* access next level of inst cache hierarchy */
-      lat = cache_access(buffer_il1, cmd, baddr, NULL, bsize,
+      lat = cache_access(isbuffer, cmd, baddr, NULL, bsize,
           /* now */now, /* pudata */NULL, /* repl addr */NULL);
     } else {
-      cache_flush(buffer_il1, now);
-      lat = cache_access(buffer_il1, cmd, baddr, NULL, bsize,
+      cache_flush(isbuffer, now);
+      lat = cache_access(isbuffer, cmd, baddr, NULL, bsize,
           /* now */now, /* pudata */NULL, /* repl addr */NULL);
 
-      buffer_il1->misses--;
+      isbuffer->misses--;
     }
-    buffer_il1->previousBaddr = baddr;
+    isbuffer->previousBaddr = baddr;
     if (cmd == Read)
       return lat;
     else {
@@ -1046,12 +1046,12 @@ sim_reg_options(struct opt_odb_t *odb)
    *****************************************/
   opt_reg_string(odb, "-cache:buffer_il",
       "-cache:buffer_il <size>",
-      &buffer_il1_opt, "0",
+      &isbuffer_opt, "0",
       FALSE, NULL);
 
   opt_reg_string(odb, "-cache:buffer_dl",
       "-cache:buffer_dl <size>",
-      &buffer_dl1_opt, "0",
+      &dsbuffer_opt, "0",
       FALSE, NULL);
 
   /****************************************
@@ -1365,9 +1365,9 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
      *   cache policy: fifo or 'f'
      *   hit latency: 1
      */
-    if(mystricmp(buffer_il1_opt, "none")) {
+    if(mystricmp(isbuffer_opt, "none")) {
       int bil1_size = 0;
-      if (sscanf(buffer_il1_opt, "%d", &bil1_size) != 1) {
+      if (sscanf(isbuffer_opt, "%d", &bil1_size) != 1) {
         fatal("Bad I-stream buffer params: <size>");
       }
 
@@ -1377,20 +1377,20 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
       }
 
       if(bil1_size == 0) {
-        buffer_il1 = NULL;
+        isbuffer = NULL;
       } else {
-        buffer_il1 = cache_create("buffer_il1", 1, bsize, /* balloc */FALSE,
+        isbuffer = cache_create("isbuffer", 1, bsize, /* balloc */FALSE,
             /* usize */0, bil1_size, cache_char2policy('f'),
-            il1_buffer_access_fn, /* hit lat */buffer_il1_lat);
-        buffer_il1->isBuffer = 1; // this is a buffer, so we set it to 1/true
+            il1_buffer_access_fn, /* hit lat */isbuffer_lat);
+        isbuffer->isBuffer = 1; // this is a buffer, so we set it to 1/true
       }
     } else {
-      buffer_il1 = NULL;
+      isbuffer = NULL;
     }
     // For our dl buffer
-    if(mystricmp(buffer_dl1_opt, "none")) {
+    if(mystricmp(dsbuffer_opt, "none")) {
       int bdl1_size = 0;
-      if (sscanf(buffer_dl1_opt, "%d", &bdl1_size) != 1) {
+      if (sscanf(dsbuffer_opt, "%d", &bdl1_size) != 1) {
         fatal("Bad D-stream buffer params: <size>");
       }
 
@@ -1400,15 +1400,15 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
       }
 
       if(bdl1_size == 0) {
-        buffer_dl1 = NULL;
+        dsbuffer = NULL;
       } else {
-        buffer_dl1 = cache_create("buffer_dl1", 1, bsize, /* balloc */FALSE,
+        dsbuffer = cache_create("dsbuffer", 1, bsize, /* balloc */FALSE,
             /* usize */0, bdl1_size, cache_char2policy('f'),
-            dl1_buffer_access_fn, /* hit lat */buffer_dl1_lat);
-        buffer_dl1->isBuffer = 1; // this is a buffer, so we set it to 1/true
+            dl1_buffer_access_fn, /* hit lat */dsbuffer_lat);
+        dsbuffer->isBuffer = 1; // this is a buffer, so we set it to 1/true
       }
     } else {
-      buffer_dl1 = NULL;
+      dsbuffer = NULL;
     }
     /********* end CS203a *********/
 
@@ -1700,11 +1700,11 @@ sim_reg_stats(struct stat_sdb_t *sdb)   /* stats database */
   //sprintf(buf,"%","CS203a Statistics");
   stat_reg_formula(sdb,"*************************CS","Statistics","203",NULL);
 
-  if (buffer_dl1){
-    cache_reg_stats(buffer_dl1, sdb);
+  if (dsbuffer){
+    cache_reg_stats(dsbuffer, sdb);
   }
-  if (buffer_il1){
-    cache_reg_stats(buffer_il1, sdb);
+  if (isbuffer){
+    cache_reg_stats(isbuffer, sdb);
   }
   stat_reg_formula(sdb, "sim_CPI",
       "cycles per instruction",
