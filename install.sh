@@ -1,10 +1,10 @@
 #!/bin/sh
 #git pull
-clear
-rm -f *.o
-make
-make config-alpha
-make sim-outorder
+#clear
+#rm -f *.o
+#make
+#make config-alpha
+#make sim-outorder
 FILES=('./benchmarks/anagram.alpha ./benchmarks/words < ./benchmarks/anagram.in' './benchmarks/go.alpha 2 8 ./benchmarks/2stone9.in')
 CACHE_BSIZE=('32' '64' '128' '256')
 CACHE_REPLACE=('l')
@@ -49,7 +49,7 @@ do
     P1="$P1 -cache:dl1 dl1:$L1 -cache:il1 il1:$L1 -redir:sim "
     P1="$P1 ./results/prefetch/${COMPILERS[$I]}-${PREFETCH[$X]}.stat $var "
     X=$((X+1))
-    echo $P1
+    $P1
   done
   echo "=============================================="
   for buf in "${BUFFERS[@]}"
@@ -60,7 +60,7 @@ do
     P2="$P2 -cache:dl1 dl1:$L1 -cache:il1 il1:$L1 -redir:sim "
     P2="$P2 ./results/buffers/${COMPILERS[$I]}-${BUFFERS[$Y]}.stat $var "
     Y=$((Y+1))
-    echo $P2
+    $P2
   done
   
   I=$((I+1))

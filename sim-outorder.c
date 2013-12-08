@@ -542,10 +542,10 @@ dl1_access_fn(enum mem_cmd cmd,		/* access cmd, Read or Write */
       return 0;
     }
   }
-  else if (cache_il2)
+  else if (cache_dl2)
   {
     /* access next level of data cache hierarchy */
-    lat = cache_access(cache_il2, cmd, baddr, NULL, bsize,
+    lat = cache_access(cache_dl2, cmd, baddr, NULL, bsize,
         /* now */now, /* pudata */NULL, /* repl addr */NULL);
 
     /* Wattch -- Dcache2 access */
