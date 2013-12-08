@@ -1,5 +1,4 @@
 #!/bin/sh
-#git pull origin Part2_DVFS
 make clean
 make
 make config-alpha

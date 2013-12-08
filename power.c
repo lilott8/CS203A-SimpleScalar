@@ -626,11 +626,15 @@ void update_power_stats()
     -last_single_total_cycle_power_cc3;
 
   /* CS203a Part2 */
+  //calculate the current delta
   double delta = FSF*VSF*VSF;
+  //update the current total_cycles powers to correspond with the delta
   current_total_cycle_power_cc1 *= delta;
   current_total_cycle_power_cc2 *= delta;
   current_total_cycle_power_cc3 *= delta;
-  
+  //Updating values for use for thr DVFS controller
+  //This calculates the total power for a given of size N
+  //N is defined in sim-outorder.c by DVFSInterval
   DVFS_power_cc1 += current_total_cycle_power_cc1;
   DVFS_power_cc2 += current_total_cycle_power_cc2;
   DVFS_power_cc3 += current_total_cycle_power_cc3;
@@ -2347,18 +2351,14 @@ void calculate_power(power)
 }
 
 /*CS 203a Part2 */
-//double cc1_prev = 0;
-//double cc2_prev = 0;
-//double cc3_prev = 0;
-//double DVFS_Avg_Power = 0;
-//double DVFS_Totoal_Power = 0;
-
 
 void DVFS_Controller(double DVFSTargetPower, int DVFSInterval){
  
   double avg_interval_power = 0.0;  
   FILE *file;
    if(current_interval == 0){
+     //print out header for .csv file
+     //should only be done at the start of the Controller
     file = fopen("./CS203a_Part2_DVFS.csv","wb");
     fprintf(file,"Interval,VSF,FSF,avg_power,DVFSInterval,DVFSTargetPower\n");
     fprintf(file,"%d,%f,%f,%f,%d,%f\n",current_interval,VSF,FSF,avg_interval_power,DVFSInterval,DVFSTargetPower);
@@ -2372,8 +2372,12 @@ void DVFS_Controller(double DVFSTargetPower, int DVFSInterval){
   
   //Calculate VSF and FSF
   if(avg_interval_power < DVFSTargetPower){
+    //Check to see if average power for the interval is 
+    // less than the desired DVFS Target Power
+    //if so increase FSF and VSF by delta
     FSF += DVFS_delta;
     VSF += DVFS_delta;
+    //keep bound between [0.2,2.0]
     ///*
     if(FSF > 2.0){
       FSF = 2.0;
@@ -2384,8 +2388,12 @@ void DVFS_Controller(double DVFSTargetPower, int DVFSInterval){
     //*/
   }
   else if(avg_interval_power > DVFSTargetPower){
+    //Check to see if average power for the interval is 
+    // greater than the desired DVFS Target Power
+    //if so decrease FSF and VSF by delta
     FSF -= DVFS_delta;
     VSF -= DVFS_delta;
+    //keep bound between [0.2,2.0]
     ///*
     if(FSF < 0.2){
       FSF = 0.2;
@@ -2395,11 +2403,11 @@ void DVFS_Controller(double DVFSTargetPower, int DVFSInterval){
     }
     //*/
   } 
-  // varaibles back to 0 to reset the interval avg power;
+  // varaibles back to 0 to reset the last/prev avg "Interval" power;
   DVFS_power_cc1 = 0;
   DVFS_power_cc2 = 0;
   DVFS_power_cc3 = 0;
-
+  //Print corresponding vales out to output file
   file = fopen("./CS203a_Part2_DVFS.csv","ab");
   fprintf(file,"%d,%f,%f,%f,%d,%f\n",current_interval,VSF,FSF,avg_interval_power,DVFSInterval,DVFSTargetPower);
   fclose(file);
@@ -2409,6 +2417,7 @@ double get_DVFS_FSF(){
 }
 
 double update_Total_Power(){
+  //getting Power from this current tick
   double tmp = current_total_cycle_power_cc1 + 
     current_total_cycle_power_cc2 +
     current_total_cycle_power_cc3;
@@ -2416,12 +2425,17 @@ double update_Total_Power(){
 }
 // E = P/(F)
 double update_Total_Energy(){
+  //getting P from this current  tick
   double P = current_total_cycle_power_cc1 + 
     current_total_cycle_power_cc2 +
     current_total_cycle_power_cc3;
+  //getting F
   double F = FSF*Mhz;
-  double E = P/F;
-  return E;
+  double E = (P/F);
+  //Scaling E
+  //Multiplying by 10^6 to neagate the small values of E being given
+  double EScaled = E*1000000;
+  return EScaled;
   
 }
 /*CS 203a Part2 end*/

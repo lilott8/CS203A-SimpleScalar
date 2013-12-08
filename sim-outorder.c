@@ -1639,7 +1639,7 @@ sim_reg_stats(struct stat_sdb_t *sdb)   /* stats database */
   */
   stat_reg_double(sdb,"DVFS_total_power","DVFS Total Power Usage",
 		  &DVFS_total_power,0,NULL);
-  stat_reg_double(sdb,"DVFS_total_energy","DVFS Total Energy Usage",
+  stat_reg_double(sdb,"DVFS_total_energy","DVFS Total Energy Usage(/by 10^6 to get real val)",
 		&DVFS_total_energy,0,NULL);
 }
 
@@ -5036,8 +5036,8 @@ sim_main(void)
 
   /* CS 203a  part 2 */
   int DVFS_Cycle_Counter = 0; //used to work with DVFS_Interval
-  DVFS_TP = dvfsTargetPower;
-  DVFS_Interval = dvfsInterval;
+  DVFS_TP = dvfsTargetPower; //Assign so that it can be outputed
+  DVFS_Interval = dvfsInterval; //Assigned so that it can be outputed
   /* CS 203a  part 2 end */
 
   /* main simulator loop, NOTE: the pipe stages are traverse in reverse order
@@ -5108,16 +5108,18 @@ sim_main(void)
     /* Added by Wattch to update per-cycle power statistics */
     update_power_stats();
     /* CS203a part b */
-    DVFS_Cycle_Counter = (DVFS_Cycle_Counter+1) % dvfsInterval; //used to work with DVFS_Interval
+    DVFS_Cycle_Counter = (DVFS_Cycle_Counter+1) % dvfsInterval; //used to work with DVFS_Interval and to know when our contoller should activate
     //DVFS is not on when DVFSTargetPower is -1 [default value]
     if((DVFS_Cycle_Counter == 0) &&(dvfsTargetPower > 0.0 )){
+      //DVFSController gets called
       DVFS_Controller(dvfsTargetPower,dvfsInterval);
     }
-        
     //Calculate Wall/elapsed time
     double base_f = Mhz;
     wall_time += (1.0/(get_DVFS_FSF()*base_f))*1000000;
+    //Calculate Total Power Consumption
     DVFS_total_power += update_Total_Power();
+    //Calculate Total Energy Consumption
     DVFS_total_energy += update_Total_Energy();
     /* CS203a part b end */
     

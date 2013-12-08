@@ -585,8 +585,13 @@ int pop_count(quad_t bits);
 int pop_count_slow(quad_t bits);
 
 /*CS 203a Part2 */
+//Used to calculate the apporpriate FSF and VSF values for the
+//DVFS Controller
 void DVFS_Controller(double DVFSTargetPower, int DVFSInterval);
+//Return FSF for use outside of power.h
 double get_DVFS_FSF();
+//Returns a double with the Total Power Consumption
 double update_Total_Power();
+//Returns a double with the Total Energy Consumption
 double update_Total_Energy();
 /*CS 203a Part2 end*/
