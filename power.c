@@ -2395,6 +2395,10 @@ void DVFS_Controller(double DVFSTargetPower, int DVFSInterval){
     }
     //*/
   } 
+  // varaibles back to 0 to reset the interval avg power;
+  DVFS_power_cc1 = 0;
+  DVFS_power_cc2 = 0;
+  DVFS_power_cc3 = 0;
 
   file = fopen("./CS203a_Part2_DVFS.csv","ab");
   fprintf(file,"%d,%f,%f,%f,%d,%f\n",current_interval,VSF,FSF,avg_interval_power,DVFSInterval,DVFSTargetPower);
@@ -2402,5 +2406,22 @@ void DVFS_Controller(double DVFSTargetPower, int DVFSInterval){
 }
 double get_DVFS_FSF(){
   return FSF;
+}
+
+double update_Total_Power(){
+  double tmp = current_total_cycle_power_cc1 + 
+    current_total_cycle_power_cc2 +
+    current_total_cycle_power_cc3;
+  return tmp;
+}
+// E = P/(F)
+double update_Total_Energy(){
+  double P = current_total_cycle_power_cc1 + 
+    current_total_cycle_power_cc2 +
+    current_total_cycle_power_cc3;
+  double F = FSF*Mhz;
+  double E = P/F;
+  return E;
+  
 }
 /*CS 203a Part2 end*/

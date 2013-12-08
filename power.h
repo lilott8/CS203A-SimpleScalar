@@ -587,4 +587,6 @@ int pop_count_slow(quad_t bits);
 /*CS 203a Part2 */
 void DVFS_Controller(double DVFSTargetPower, int DVFSInterval);
 double get_DVFS_FSF();
+double update_Total_Power();
+double update_Total_Energy();
 /*CS 203a Part2 end*/

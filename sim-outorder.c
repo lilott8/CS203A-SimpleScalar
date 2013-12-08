@@ -1627,14 +1627,20 @@ sim_reg_stats(struct stat_sdb_t *sdb)   /* stats database */
   
   stat_reg_double(sdb,"DVFSTargetPower","DVFS Target Power",
   		  &DVFS_TP,0,NULL);
-  stat_reg_int(sdb,"DVFS_Interval","DVFS Interval",
+  stat_reg_int(sdb,"DVFSInterval","DVFS Interval",
   		  &DVFS_Interval,0,NULL);
+  /*
   double DVFS_total_power = 0.0;
   stat_reg_double(sdb,"DVFS_total_power","DVFS Total Power",
 		  &DVFS_total_power,0,NULL);
   double DVFS_avg_power = 0.0;
   stat_reg_double(sdb,"DVFS_avg_power","DVFS Average Power",
 		&DVFS_avg_power,0,NULL);
+  */
+  stat_reg_double(sdb,"DVFS_total_power","DVFS Total Power Usage",
+		  &DVFS_total_power,0,NULL);
+  stat_reg_double(sdb,"DVFS_total_energy","DVFS Total Energy Usage",
+		&DVFS_total_energy,0,NULL);
 }
 
 /* forward declarations */
@@ -5032,8 +5038,6 @@ sim_main(void)
   int DVFS_Cycle_Counter = 0; //used to work with DVFS_Interval
   DVFS_TP = DVFSTargetPower;
   DVFS_Interval = DVFSInterval;
-  //DVFS_TP = 17.8353;
-  //DVFS_Interval = 10000;
   /* CS 203a  part 2 end */
 
   /* main simulator loop, NOTE: the pipe stages are traverse in reverse order
@@ -5105,15 +5109,16 @@ sim_main(void)
     update_power_stats();
     /* CS203a part b */
     DVFS_Cycle_Counter = (DVFS_Cycle_Counter+1) % DVFSInterval; //used to work with DVFS_Interval
-        
-    if((DVFS_Cycle_Counter == 0)){
+    //DVFS is not on when DVFSTargetPower is -1 [default value]
+    if((DVFS_Cycle_Counter == 0) &&(DVFSTargetPower > 0.0 )){
       DVFS_Controller(DVFSTargetPower,DVFSInterval);
     }
         
     //Calculate Wall/elapsed time
     double base_f = Mhz;
     wall_time += (1.0/(get_DVFS_FSF()*base_f))*1000000;
-    
+    DVFS_total_power += update_Total_Power();
+    DVFS_total_energy += update_Total_Energy();
     /* CS203a part b end */
     
     /* update buffer occupancy stats */
