@@ -255,9 +255,9 @@ int data_width = 64;
 extern power_result_type power;
 
 /* CS203a Part 2 */
-static double DVFSTargetPower;
+static double dvfsTargetPower;
 double DVFS_TP =0.0;
-static int DVFSInterval;
+static int dvfsInterval;
 int DVFS_Interval = 0;
 double wall_time = 0.0;
 double DVFS_total_power = 0.0;
@@ -1080,12 +1080,12 @@ sim_reg_options(struct opt_odb_t *odb)
   //*/
   opt_reg_double(odb, "-DVFSTargetPower",
   	      "target power usage",
-  	      &DVFSTargetPower, /* default */-1.0,
+  	      &dvfsTargetPower, /* default */-1.0,
   	      /* print */TRUE, /* format */NULL);
   
   opt_reg_int(odb, "-DVFSInterval",
   	      "Number cycles between checks",
-  	      &DVFSInterval, /* default */100000,
+  	      &dvfsInterval, /* default */100000,
   	      /* print */TRUE, /* format */NULL);
   
 //CS203a end part2
@@ -1625,9 +1625,9 @@ sim_reg_stats(struct stat_sdb_t *sdb)   /* stats database */
   stat_reg_double(sdb,"wall_time","Total run-time of program in Seconds",
 		  &wall_time,0,NULL);
   
-  stat_reg_double(sdb,"DVFSTargetPower","DVFS Target Power",
+  stat_reg_double(sdb,"dvfs_TargetPower","DVFS Target Power",
   		  &DVFS_TP,0,NULL);
-  stat_reg_int(sdb,"DVFSInterval","DVFS Interval",
+  stat_reg_int(sdb,"dvfs_Interval","DVFS Interval",
   		  &DVFS_Interval,0,NULL);
   /*
   double DVFS_total_power = 0.0;
@@ -5036,8 +5036,8 @@ sim_main(void)
 
   /* CS 203a  part 2 */
   int DVFS_Cycle_Counter = 0; //used to work with DVFS_Interval
-  DVFS_TP = DVFSTargetPower;
-  DVFS_Interval = DVFSInterval;
+  DVFS_TP = dvfsTargetPower;
+  DVFS_Interval = dvfsInterval;
   /* CS 203a  part 2 end */
 
   /* main simulator loop, NOTE: the pipe stages are traverse in reverse order
@@ -5108,10 +5108,10 @@ sim_main(void)
     /* Added by Wattch to update per-cycle power statistics */
     update_power_stats();
     /* CS203a part b */
-    DVFS_Cycle_Counter = (DVFS_Cycle_Counter+1) % DVFSInterval; //used to work with DVFS_Interval
+    DVFS_Cycle_Counter = (DVFS_Cycle_Counter+1) % dvfsInterval; //used to work with DVFS_Interval
     //DVFS is not on when DVFSTargetPower is -1 [default value]
-    if((DVFS_Cycle_Counter == 0) &&(DVFSTargetPower > 0.0 )){
-      DVFS_Controller(DVFSTargetPower,DVFSInterval);
+    if((DVFS_Cycle_Counter == 0) &&(dvfsTargetPower > 0.0 )){
+      DVFS_Controller(dvfsTargetPower,dvfsInterval);
     }
         
     //Calculate Wall/elapsed time
